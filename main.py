@@ -33,5 +33,3 @@ if __name__ == '__main__':
         end_panel(user_values['SummaryFile'])
     else:
         error_panel(check_report)
-
-

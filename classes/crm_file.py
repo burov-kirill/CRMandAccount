@@ -74,16 +74,24 @@ class CrmFile:
         # add_df['Площадь'] = np.where(add_df['Учитывается(нет/да)']=='Да', self.df['Площадь общая по договору (без дублей)'], 0)
         add_df['Площадь'] = [f'=IF(AT{i + 5}="Да",M{i + 5},0)' for i in range(len(add_df))]
         add_df['Сумма'] = [f'=IF(AT{i + 5}="Да",L{i + 5},0)/1000' for i in range(len(add_df))]
-        add_df['Корректировка м.2'] = [f'=-AX{5+i}' if self.df['Контрагент'][i] in self.TECH_AGENTS
-                                       or self.df['Помещение Под Тип'][i] in self.TECH_PLACES else ''
-                                       for i in range(len(add_df))
-                                       ]
-        add_df['Корректировка тыс.руб.'] = [f'=-AY{5 + i}' if self.df['Контрагент'][i] in self.TECH_AGENTS else ''
-                                            for i in range(len(add_df))
-                                       ]
+        # add_df['Корректировка м.2'] = [f'=-AX{5+i}' if self.df['Контрагент'][i] in self.TECH_AGENTS
+        #                                or self.df['Помещение Под Тип'][i] in self.TECH_PLACES else ''
+        #                                for i in range(len(add_df))
+        #                                ]
+        # add_df['Корректировка тыс.руб.'] = [f'=-AY{5 + i}' if self.df['Контрагент'][i] in self.TECH_AGENTS else ''
+        #                                     for i in range(len(add_df))
+        #                                ]
         add_df.fillna('missing', inplace=True)
         add_df = self.__custom_fillna(add_df)
         add_df['Расторгнут?(да/нет)'] = np.where(add_df['Год расторжения'] == '', 'Нет', 'Да')
+        add_df['Корректировка м.2'] = [f'=-AX{5+i}' if self.df['Расторгнут?(да/нет)'] == 'Да' else ''
+                                       for i in range(len(add_df))
+                                       ]
+        add_df['Корректировка тыс.руб.'] = [f'=-AY{5 + i}' if self.df['Расторгнут?(да/нет)'][i] == 'Да' else ''
+                                            for i in range(len(add_df))
+                                       ]
+        add_df['Комментарий'] = [f'Техническая продажа' if self.df['Контрагент'][i] in self.TECH_AGENTS else ''
+                                            for i in range(len(add_df))]
         return add_df
 
     @staticmethod
