@@ -14,7 +14,6 @@ if __name__ == '__main__':
         pass
     else:
         killProcess(pid)
-        sg.PopupOK(f'{get_subpath(sys.argv[0], 1)}\\config')
         os.chdir(get_subpath(sys.argv[0], 1))
         shutil.rmtree(f'{get_subpath(sys.argv[0], 1)}\\config', ignore_errors=True)
 
