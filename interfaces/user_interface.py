@@ -119,12 +119,15 @@ def init_panel():
         if event == 'upd_btn':
             yeet.close()
             call_updater('pocket')
-        if values['_INPUT_'] != '' and event != 'prj':  # if a keystroke entered in search field
+        if values['_INPUT_'] != '' and event == '_INPUT_':  # if a keystroke entered in search field
             search = values['_INPUT_']
             new_values = [x for x in PROJECT_NAMES if search in x]  # do the filtering
             yeet.Element('prj').Update(new_values)
+
         elif values['_INPUT_'] == '' and (event == 'new_prj' or len(yeet.Element('prj').get_list_values())<len(PROJECT_NAMES)):
             yeet.Element('prj').Update(PROJECT_NAMES)
+        # elif event == 'prj':
+        #     sg.PopupOK('kdkd')
         if 'new_prj' in event:
             set_new_project(values['_INPUT_'])
             yeet.Element('_INPUT_').Update('')
