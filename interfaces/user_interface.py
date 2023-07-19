@@ -37,14 +37,20 @@ def set_new_project(project_name):
 def init_panel():
     sg.theme('SamoletTheme')
     PROJECT_NAMES = get_projects_list()
-    UPD_FRAME = [[sg.Button('Проверка', key='check_upd'), sg.pin(sg.Text('Доступно обновление', visible=False, key='upd_txt', background_color='#007bfb', font='bold')),
-                 sg.pin(sg.Button('Обновить', key='upd_btn',  visible=False))],
+    UPD_FRAME = [[sg.Button('Проверка', key='check_upd'), sg.Text('Нет обновлений', key='not_upd_txt'),
+                  sg.Push(),
+                  sg.pin(sg.Text('Доступно обновление', justification='center', visible=False, key='upd_txt', background_color='#007bfb', font='bold')),
+                  sg.Push(),
+                sg.pin(sg.Button('Обновить', key='upd_btn',  visible=False))],
     ]
     PRJ_FRAME = [[sg.Input(do_not_clear=True, size=(30, 1), enable_events=True, key='_INPUT_')],
                  [sg.Listbox(PROJECT_NAMES, key='prj', select_mode = 'LISTBOX_SELECT_MODE_SINGLE',
                         size = (30, 5), sbar_trough_color='#007bfb', sbar_frame_color='#007bfb',
                         sbar_arrow_color='#ffffff', sbar_relief='RELIEF_FLAT',
-                        highlight_background_color='#007bfb', enable_events=True), sg.Button('Добавить новый проект', key='new_prj')]]
+                        highlight_background_color='#007bfb', enable_events=True),
+                  sg.Push(),
+                  sg.Button('Добавить новый проект', key='new_prj'),
+                  sg.Push()]]
 
     # DOC_FRAME = [
     #         [sg.Text('Счет 76', background_color='#007bfb', font='bold')],
@@ -107,6 +113,7 @@ def init_panel():
         if event == 'check_upd':
             check = True
         if not upd_check:
+            yeet['not_upd_txt'].Update(visible=False)
             yeet['upd_txt'].Update(visible=True)
             yeet['upd_btn'].Update(visible=True)
         if event == 'upd_btn':
