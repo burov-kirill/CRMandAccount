@@ -98,7 +98,7 @@ def init_panel():
     yeet = sg.Window(f'Сверка БИТ и CRM {VERSION}', background_color='#007bfb', layout=layout)
     check, upd_check = False, True
     while True:
-        event, values = yeet.read()
+        event, values = yeet.read(timeout=10)
         if check:
             upd_check = check_version()
             check = False
