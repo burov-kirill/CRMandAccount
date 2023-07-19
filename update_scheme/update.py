@@ -102,40 +102,28 @@ def get_subpath(path, i):
         i-=1
     return path
 
-def set_update_params(updater_path, is_dir, type_file):
+def set_update_params(updater_path, type_file):
     PATH = os.path.dirname(sys.executable)
-    print(PATH)
     pid = str(os.getpid())
-    print(pid)
     FNULL = open(os.devnull, 'w')
     URL = ZIP_URL
-    print(URL)
     APP = APP_NAME
-    print(APP)
-    args = f'{updater_path} -config ' + URL + " " + APP + " " + pid + " " + PATH + " " + str(is_dir)
-    print(args)
+    args = f'{updater_path} -config ' + URL + " " + APP + " " + pid + " " + PATH + " "
     subprocess.call(args, stdout=FNULL, stderr=FNULL, shell=False)
 
 def call_updater(type_file = 'pocket'):
     path = os.path.abspath(__file__).replace(os.path.basename(__file__), '')
     # path = path[:path.rfind('//')]
-    is_dir = is_directory()
-    if not is_dir:
-        os.mkdir(UPDATE_FOLDER)
-        upd_path = f'{UPDATE_FOLDER}/{UPDATE_NAME}'
-        create_download_window(UPDATE_URL, upd_path)
-        set_update_params(upd_path, is_dir, type_file)
+    # is_dir = is_directory()
 
-    else:
-        print('directory')
         # path = get_subpath(path, 2)
-        path = os.path.dirname(sys.executable)
-        path = get_subpath(path, 1)
-        Path(f'{path}\\config').mkdir(parents=True, exist_ok=True)
-        folder_path = f'{path}\\config\\updater.exe'
-        my_file = folder_path.replace('\\', '/')
-        create_download_window(UPDATE_URL, folder_path)
-        set_update_params(my_file, is_dir, type_file)
+    path = os.path.dirname(sys.executable)
+    path = get_subpath(path, 1)
+    Path(f'{path}\\config').mkdir(parents=True, exist_ok=True)
+    folder_path = f'{path}\\config\\updater.exe'
+    my_file = folder_path.replace('\\', '/')
+    create_download_window(UPDATE_URL, folder_path)
+    set_update_params(my_file, type_file)
 
         # if os.path.isdir('config'):
         #     if my_file.is_file():
