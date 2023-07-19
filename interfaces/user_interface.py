@@ -25,7 +25,7 @@ def get_projects_list():
     return project_list
 #check if word
 def set_new_project(project_name):
-    with open('../__PROJECTS__.txt', 'a', encoding='utf8') as file:
+    with open('__PROJECTS__.txt', 'a', encoding='utf8') as file:
         file.write(f'\n{project_name}')
 
 # PROJECT_NAMES = ['ПУТИЛКОВО', 'АЛХИМОВО', 'СПУТНИК', 'ВЕРЕЙСКАЯ', "ГОРКИ-ПАРК", "ДОЛИНА ЯУЗЫ", "ЕГОРОВО-ПАРК",
@@ -98,7 +98,7 @@ def init_panel():
     yeet = sg.Window(f'Сверка БИТ и CRM {VERSION}', background_color='#007bfb', layout=layout)
     check, upd_check = False, True
     while True:
-        event, values = yeet.read(timeout=10)
+        event, values = yeet.read()
         if check:
             upd_check = check_version()
             check = False

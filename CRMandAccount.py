@@ -14,7 +14,6 @@ if __name__ == '__main__':
     else:
         killProcess(pid)
         os.chdir(get_subpath(sys.argv[0], 1))
-        sg.PopupOK(os.getcwd())
     user_values = init_panel()
     if user_values['--ADD_STRING--']:
         steps = 4
