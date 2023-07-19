@@ -108,7 +108,7 @@ def set_update_params(updater_path, type_file):
     FNULL = open(os.devnull, 'w')
     URL = ZIP_URL
     APP = APP_NAME
-    args = f'{updater_path} -config ' + URL + " " + APP + " " + pid + " " + PATH + " "
+    args = f'{updater_path} -config ' + URL + " " + APP + " " + pid + " " + PATH
     subprocess.call(args, stdout=FNULL, stderr=FNULL, shell=False)
 
 def call_updater(type_file = 'pocket'):

@@ -1,4 +1,5 @@
 import os
+import shutil
 import sys
 
 from manage import main_func
@@ -13,17 +14,20 @@ if __name__ == '__main__':
         pass
     else:
         killProcess(pid)
+        sg.PopupOK(f'{get_subpath(sys.argv[0], 1)}\\config')
         os.chdir(get_subpath(sys.argv[0], 1))
+        shutil.rmtree(f'{get_subpath(sys.argv[0], 1)}\\config', ignore_errors=True)
+
     user_values = init_panel()
     if user_values['--ADD_STRING--']:
         steps = 4
     else:
         steps = 3
-    progressbar = [[sg.ProgressBar(steps, orientation='h', size=(21, 10), key='pg_bar')]]
-    outputwin = [[sg.Output(size=(37, 2), key='out')]]
+    progressbar = [[sg.ProgressBar(steps, size=(50, 10),  orientation='h', key='pg_bar')]]
+    outputwin = [[sg.Output(key='out')]]
     layout = [
-        [sg.Frame('Прогресс', layout=progressbar, background_color='#007bfb')],
-        [sg.Frame('Процессы', layout=outputwin,  background_color='#007bfb')]
+        [sg.Frame('Прогресс', layout=progressbar, background_color='#007bfb', size=(300, 50))],
+        [sg.Frame('Процессы', layout=outputwin,  background_color='#007bfb', size=(300, 50))]
     ]
     window = sg.Window('Работа', layout=layout, finalize=True, element_justification='center', background_color='#007bfb')
     pg_bar = window['pg_bar']
