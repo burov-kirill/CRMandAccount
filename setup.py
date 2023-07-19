@@ -1,5 +1,7 @@
 from cx_Freeze import setup, Executable
-executables = [Executable('CRMandAccount.py', base='Win32GUI')]
+executables = [Executable('CRMandAccount.py', base='Win32GUI',
+                          target_name='CRMandAccount.exe',
+                          icon='ico/analysis_finance_statistics_business_graph_chart_report_icon_254045.ico')]
 excludes = ['unittest', 'asyncio', 'sqlite3']
 includefiles = ['__PROJECTS__.txt', '__VERS__.txt']
 
