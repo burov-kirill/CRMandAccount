@@ -1,9 +1,10 @@
+import os
 import sys
 
 from manage import main_func
 import PySimpleGUI as sg
 from interfaces.user_interface import init_panel, end_panel, error_panel
-from update_scheme.update import killProcess
+from update_scheme.update import killProcess, get_subpath
 
 if __name__ == '__main__':
     try:
@@ -12,6 +13,8 @@ if __name__ == '__main__':
         pass
     else:
         killProcess(pid)
+        os.chdir(get_subpath(sys.argv[0], 1))
+        sg.PopupOK(os.getcwd())
     user_values = init_panel()
     if user_values['--ADD_STRING--']:
         steps = 4
