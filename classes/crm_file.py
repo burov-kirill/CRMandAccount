@@ -84,10 +84,10 @@ class CrmFile:
         add_df.fillna('missing', inplace=True)
         add_df = self.__custom_fillna(add_df)
         add_df['Расторгнут?(да/нет)'] = np.where(add_df['Год расторжения'] == '', 'Нет', 'Да')
-        add_df['Корректировка м.2'] = [f'=-AX{5+i}' if self.df['Расторгнут?(да/нет)'] == 'Да' else ''
+        add_df['Корректировка м.2'] = [f'=-AX{5+i}' if add_df['Расторгнут?(да/нет)'][i] == 'Да' else ''
                                        for i in range(len(add_df))
                                        ]
-        add_df['Корректировка тыс.руб.'] = [f'=-AY{5 + i}' if self.df['Расторгнут?(да/нет)'][i] == 'Да' else ''
+        add_df['Корректировка тыс.руб.'] = [f'=-AY{5 + i}' if add_df['Расторгнут?(да/нет)'][i] == 'Да' else ''
                                             for i in range(len(add_df))
                                        ]
         add_df['Комментарий'] = [f'Техническая продажа' if self.df['Контрагент'][i] in self.TECH_AGENTS else ''

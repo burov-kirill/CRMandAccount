@@ -238,8 +238,6 @@ def main_func(user_values, pg_bar, out):
         DownTableDict = {element: get_split_row(sheet, EndRow, element, SplitRow) + get_split_row(sheet, EndRow, StartRow=get_split_row(sheet, EndRow, element, SplitRow), option=False)
                          for element in ['По данным 1С', 'По данным CRM', 'Разница']}
 
-        # list_for_bottom = [get_split_row(sheet, EndRow, element, SplitRow) for element in
-        #                        ('По данным 1С', 'По данным CRM', 'Разница')]
 
         UpTableDict = {element: get_split_row(sheet, SplitRow, element) + get_split_row(sheet, SplitRow, StartRow=get_split_row(sheet, SplitRow, element), option=False)
                        for element in ['Продажи тыс. руб. (накопительный итог) без учета ВГО и дополнительных корректировок',
@@ -259,9 +257,11 @@ def main_func(user_values, pg_bar, out):
 
                     sheet.Range(obj.copy).Copy()
                     sheet.Range(obj.past).PasteSpecial(-4123)
+                    sheet.Range(obj.past).PasteSpecial(8)
                     sheet.Range(obj.past).PasteSpecial(-4122)
-                    if k == 'DownTable':
-                        sheet.Range(obj.past).EntireColumn.AutoFit()
+
+                    # if k == 'DownTable':
+                    #     sheet.Range(obj.past).EntireColumn.AutoFit()
 
                     if k in ('AccPay', "AccSales"):
                         for key, value in UpTableDict.items():
@@ -291,7 +291,7 @@ def main_func(user_values, pg_bar, out):
                                                                                   sheet.Range(f'{init_letter}{i}').Formula)
 
                 pass
-        if user_values['-IN2-']:
+        if user_values['--ADD_STRING--']:
             out.Update('Оформление СВОДа: добавление строк')
             pg_bar.Update(4)
             add_rows(sheet, user_values['new_data'])
