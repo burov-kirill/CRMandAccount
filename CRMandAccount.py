@@ -15,7 +15,7 @@ if __name__ == '__main__':
     else:
         killProcess(pid)
         os.chdir(get_subpath(sys.argv[0], 1))
-        shutil.rmtree(f'{get_subpath(sys.argv[0], 1)}\\config', ignore_errors=True)
+        # shutil.rmtree(f'{get_subpath(sys.argv[0], 1)}\\config', ignore_errors=True)
 
     user_values = init_panel()
     if user_values['--ADD_STRING--']:
