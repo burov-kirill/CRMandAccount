@@ -62,9 +62,9 @@ def init_panel():
         [sg.Column([
                     [sg.pin(sg.Checkbox('Добавить строки', background_color='#007bfb', enable_events=True, key='--ADD_STRING--'), shrink=True), sg.Push(),
                      sg.pin(sg.Checkbox('Создать новый файл', background_color='#007bfb', enable_events=True, key='--CREATE_FILE--'), shrink=True)],
-                    [sg.pin(sg.Text('Номенклатура', visible=False, key='spt_text', background_color='#007bfb', font='bold'))],
-                    [sg.pin(sg.Input(key='spt', visible=False)), sg.pin(sg.FileBrowse(key='spt_browse',button_color='#007bfb',
-                                                                                           visible=False,button_text='Выбрать'))],
+                    [sg.Text('Номенклатура', visible=False, key='spt_text', background_color='#007bfb', font='bold')],
+                    [sg.Input(key='spt', visible=False), sg.FileBrowse(key='spt_browse',button_color='#007bfb',
+                                                                                           visible=False,button_text='Выбрать')],
                     [sg.Text('Счет 76', background_color='#007bfb', font='bold')],
                     [sg.Input(key='AccPay'), sg.FileBrowse(button_color='#007bfb', button_text='Выбрать')],
                     [sg.Text('Счет 90', background_color='#007bfb', font='bold')],
@@ -73,9 +73,9 @@ def init_panel():
                     [sg.Input(key='CRM'), sg.FileBrowse(button_color='#007bfb', button_text='Выбрать')],
                     [sg.Text('Сводный файл', background_color='#007bfb', font='bold')],
                     [sg.Input(key='SummaryFile'), sg.FileBrowse(button_color='#007bfb', button_text='Выбрать')],
-                    [sg.pin(sg.Text('Новые строки', visible=False, key='new_data_text', background_color='#007bfb', font='bold'))],
-                    [sg.pin(sg.Input(key='new_data', visible=False)), sg.pin(sg.FileBrowse(key='new_data_browse', visible=False,
-                                                                                    button_color='#007bfb', button_text='Выбрать'))],
+                    [sg.Text('Новые строки', visible=False, key='new_data_text', background_color='#007bfb', font='bold')],
+                    [sg.Input(key='new_data', visible=False), sg.FileBrowse(key='new_data_browse', visible=False,
+                                                                                    button_color='#007bfb', button_text='Выбрать')],
                     ],key='--DOC_COL--', scrollable = True, vertical_scroll_only = True, size=(430,300), background_color='#007bfb')]
     ]
     layout = [
