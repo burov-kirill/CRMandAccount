@@ -17,6 +17,8 @@ sg.LOOK_AND_FEEL_TABLE['SamoletTheme'] = {
                                         'PROGRESS': ('#354d73', '#FFFFFF'),
                                         'BORDER': 1, 'SLIDER_DEPTH': 0,
                                         'PROGRESS_DEPTH': 0, }
+
+PERIODS = ['Месяц', 'Квартал', 'Полугодие', 'Год']
 def get_projects_list():
     project_list = []
     with open('__PROJECTS__.txt', 'r', encoding='utf8') as file:
@@ -50,34 +52,16 @@ def init_panel():
                         highlight_background_color='#007bfb', enable_events=True),
                   sg.Push(),
                   sg.Button('Добавить новый проект', key='new_prj'),
-                  sg.Push()]]
+                  sg.Push()],
+                 [sg.Text('Начальный\nпериод'), sg.Combo(PERIODS, default_value='Полугодие', key='--FROM_PERIOD--'), sg.Push(),
+                 sg.Text('Конечный\nпериод'), sg.Combo(PERIODS,default_value='Полугодие', key='--TO_PERIOD--')]
+                 ]
 
-    # DOC_FRAME = [
-    #         [sg.Text('Счет 76', background_color='#007bfb', font='bold')],
-    #         [sg.Input(key='AccPay'), sg.FileBrowse(button_color='#007bfb', button_text='Выбрать')],
-    #         [sg.Text('Счет 90', background_color='#007bfb', font='bold')],
-    #         [sg.Input(key='AccSales'), sg.FileBrowse(button_color='#007bfb', button_text='Выбрать')],
-    #         [sg.Text('Данные CRM', background_color='#007bfb', font='bold')],
-    #         [sg.Input(key='CRM'), sg.FileBrowse(button_color='#007bfb', button_text='Выбрать')],
-    #         [sg.Text('Сводный файл', background_color='#007bfb', font='bold')],
-    #         [sg.Input(key='SummaryFile'), sg.FileBrowse(button_color='#007bfb', button_text='Выбрать')],
-    #
-    #         [sg.Radio('Есть дополнение', "RADIO1", default=False, key="-IN2-", enable_events=True,
-    #               background_color='#007bfb'),
-    #         sg.Radio('Нет дополнений', "RADIO1", default=True, enable_events=True, background_color='#007bfb',
-    #               key='-IN1-')],
-    #         [sg.Input(key='new_data', visible=False),
-    #             sg.FileBrowse(key='new_data_browse', visible=False, button_color='#007bfb', button_text='Выбрать')],
-    #         [sg.pin(sg.Column(layout=[[sg.Text('Данные для редактирования', visible=False, key='spt_text', background_color='#007bfb',
-    #                   font='bold')],
-    #          [sg.Input(key='spt', visible=False),
-    #           sg.FileBrowse(key='spt_browse', button_color='#007bfb', visible=False, button_text='Выбрать')]], key='--COL--',
-    #                       visible=False), shrink=True)]
-    # ]
 
     NEW_DOC_FRAME = [
         [sg.Column([
-                    [sg.pin(sg.Checkbox('Добавить строки', background_color='#007bfb', enable_events=True, key='--ADD_STRING--'), shrink=True)],
+                    [sg.pin(sg.Checkbox('Добавить строки', background_color='#007bfb', enable_events=True, key='--ADD_STRING--'), shrink=True), sg.Push(),
+                     sg.pin(sg.Checkbox('Создать новый файл', background_color='#007bfb', enable_events=True, key='--CREATE_FILE--'), shrink=True)],
                     [sg.pin(sg.Text('Номенклатура', visible=False, key='spt_text', background_color='#007bfb', font='bold'))],
                     [sg.pin(sg.Input(key='spt', visible=False)), sg.pin(sg.FileBrowse(key='spt_browse',button_color='#007bfb',
                                                                                            visible=False,button_text='Выбрать'))],
@@ -96,7 +80,7 @@ def init_panel():
     ]
     layout = [
             [sg.Frame(layout=UPD_FRAME, title='Обновление',background_color='#007bfb', key='--UPD_FRAME--',size=(470, 60))],
-            [sg.Frame(layout=PRJ_FRAME, title='Выбор проекта', background_color='#007bfb', size=(470, 150), )],
+            [sg.Frame(layout=PRJ_FRAME, title='Выбор проекта', background_color='#007bfb', size=(470, 200), )],
             [sg.Frame(layout=NEW_DOC_FRAME, title='Выбор документов', background_color='#007bfb', size=(470, 350))],
             [sg.OK(button_color='#007bfb', button_text='Далее'), sg.Cancel(button_color='#007bfb', button_text='Выход')]
 
@@ -164,6 +148,12 @@ def init_panel():
     yeet.close()
     check_values = check_user_values(user_values=values)
     if check_values:
+        values['prj'] =  values['prj'][0].replace(' ', '_')
+        if (values['AccPay'] == '' and values['--FROM_PERIOD--'] != values['--TO_PERIOD--']) \
+                or (values['CRM'] == '' and values['--FROM_PERIOD--'] != values['--TO_PERIOD--']):
+            values['--REVIEW--'] = True
+        else:
+            values['--REVIEW--'] = False
         return values
     else:
         check_input_error = input_error_panel()
@@ -172,8 +162,10 @@ def init_panel():
 
 
 def check_user_values(user_values):
-    keys = ['AccPay', 'SummaryFile', 'CRM']
-    if any(map(lambda x: user_values[x] == '' or user_values[x] == [], keys)):
+    if (user_values['AccPay'] == '' and user_values['--FROM_PERIOD--'] == user_values['--TO_PERIOD--'])\
+            or (user_values['CRM'] == '' and user_values['--FROM_PERIOD--'] == user_values['--TO_PERIOD--']) or\
+            (user_values['SummaryFile'] == '' and user_values['prj'] == '') or \
+            (user_values['--CREATE_FILE--'] and user_values['--FROM_PERIOD--'] != user_values['--TO_PERIOD--']):
         return False
     else:
         return True

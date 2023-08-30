@@ -1,3 +1,6 @@
+import os
+from datetime import datetime
+from openpyxl.utils.cell import get_column_letter, column_index_from_string
 import pandas as pd
 import re
 import string
@@ -5,6 +8,7 @@ import win32com.client
 from collections import namedtuple
 from classes.crm_file import CrmFile
 from classes.excel_file import AccountSales, AccountPayment
+from create_file import open_and_fill_new_file, fill_data
 
 RowsDict = {'По данным 1С': 6, 'По данным CRM': 5, 'Разница': 4,
             'Продажи кв.м. (накопительный итог) без учета ВГО и дополнительных корректировок': 6,
@@ -21,6 +25,10 @@ EditFormulasDict = {'Продажи кв.м. (накопительный ито�
             'Продажи тыс. руб. (накопительный итог) с учетом ВГО и дополнительных корректировок': 6,
             'Партнерские продажи, кв. м.': 6, 'Партнерские продажи, тыс. руб.': 6,
 }
+
+ROMANIAN_NUMBERS = pd.DataFrame({1: 'I', 2: 'II', 3: 'III', 4: 'IV', 5: 'V', 6: 'VI',  7: 'VII',
+                    8: 'VIII', 9: 'IX', 10: 'X', 11: 'XI', 12: 'XII'}.items(), columns = ['latin', 'romanian'])
+
 
 
 def add_rows(ws, data_path):
@@ -44,38 +52,27 @@ def add_rows(ws, data_path):
                     ).Value = new_data.values
 
 def get_excel_range(number):
-    alphabet = string.ascii_uppercase
     if isinstance(number, (int, float)):
-        if number>=26:
-            first_letter = alphabet[(number//26)-1]
-            letter = f'{first_letter}{alphabet[number%26]}'
-        else:
-            letter = alphabet[number]
-        return letter
+        return get_column_letter(number)
     else:
-        alpha_list = list(number)
-        if len(number)>1:
-            number = (alphabet.find(alpha_list[0])+1)*26 + (alphabet.find(alpha_list[1]) + 1)
-        else:
-            number = alphabet.find(alpha_list[0])+1
-        return number
+        return column_index_from_string(number)
 
-def get_split_row(ws, EndRow, text = '', StartRow = 1, option = True):
+def get_split_row(ws, EndRow, text = '', StartRow = 1, option = True, column = 'B'):
     split_row = 0
     if option:
         for i in range(StartRow, EndRow+1):
-            if ws.Range(f'B{i}').Value == text: # 'СВЕРКА 1С и CRM'
+            if ws.Range(f'{column}{i}').Value == text: # 'СВЕРКА 1С и CRM'
                 split_row = i
                 break
     else:
         for i in range(StartRow, EndRow+1):
-            if re.match(r'\d_\d{4}', str(ws.Range(f'E{i}').Value)) != None \
-                    and ws.Range(f'E{i}').Value == re.match(r'\d_\d{4}', str(ws.Range(f'E{i}').Value)).group():
+            if re.match(r'\d*_?\d{4}\.?\d?', str(ws.Range(f'E{i}').Value)) != None \
+                    and str(ws.Range(f'E{i}').Value) == re.match(r'\d*_?\d{4}\.?\d?', str(ws.Range(f'E{i}').Value)).group():
                 split_row = i - StartRow
                 break
     return split_row
 
-def get_split_col(ws, SearchRow, StartRow = 1, EndRow = 200):
+def get_split_col(ws, SearchRow, StartRow = 1, EndRow = 1000):
     value_list = ws.Range(f'{SearchRow}:{SearchRow}').Value[0]
     res_col = 0
     for i in range(StartRow, EndRow):
@@ -120,23 +117,26 @@ def create_cumsum_column(sheet, df):
 
 
 def create_custom_range(ws, project, range_type, EndRow, SplitRow):
+    project = project.replace('_', ' ')
     custom_range = namedtuple('range', ['type', 'copy', 'past'])
     if range_type in ('AccPay', "AccSales"):
         prj_row = get_split_row(ws, SplitRow, project)
         first_col = get_split_col(ws, prj_row, 1, 100)
         last_col = get_split_col(ws, prj_row, first_col + 1, 100) + 1
         if range_type == 'AccPay':
-            copy_range = f'{get_excel_range(first_col-1)}1:{get_excel_range(first_col-1)}{SplitRow}'
-            past_range = f'{get_excel_range(first_col)}1:{get_excel_range(first_col)}{SplitRow}'
+            copy_range = f'{get_excel_range(first_col)}18:{get_excel_range(first_col)}{SplitRow}'
+            past_range = f'{get_excel_range(first_col + 1)}18:{get_excel_range(first_col + 1)}{SplitRow}'
         else:
-            copy_range = f'{get_excel_range(last_col-2)}1:{get_excel_range(last_col-2)}{SplitRow}'
-            past_range = f'{get_excel_range(last_col-1)}1:{get_excel_range(last_col-1)}{SplitRow}'
+            copy_range = f'{get_excel_range(last_col-1)}18:{get_excel_range(last_col-1)}{SplitRow}'
+            past_range = f'{get_excel_range(last_col)}18' \
+                         f':{get_excel_range(last_col)}{SplitRow}'
     else:
-        prj_row = get_split_row(ws, EndRow, 'ИТОГО', SplitRow + 2)
+        prj_row = get_split_row(ws, EndRow, 'СВЕРКА 1С и CRM', SplitRow + 2)
+        prj_row = get_split_row(ws, EndRow, 'Index 3', prj_row, True, "D")
         last_col = get_split_col(ws, prj_row, 5)
 
-        copy_range = f'{get_excel_range(last_col-10)}{SplitRow+4}:{get_excel_range(last_col-1)}{EndRow}'
-        past_range = f'{get_excel_range(last_col)}{SplitRow+4}:{get_excel_range(last_col+9)}{EndRow}'
+        copy_range = f'{get_excel_range(last_col-9)}{SplitRow+4}:{get_excel_range(last_col)}{EndRow}'
+        past_range = f'{get_excel_range(last_col + 1)}{SplitRow+4}:{get_excel_range(last_col+10)}{EndRow}'
 
     return custom_range(range_type, copy_range, past_range)
 
@@ -151,30 +151,324 @@ def check_range(ws, rng, user_rng, table_type, StartCol = 5):
     else:
         return False
 
+def change_range(sheet,EndRow, user_values, obj, create_new_file):
+    for key, value in EditFormulasDict.items():
+        InitRow = get_split_row(sheet, EndRow, user_values['prj'].replace('_', ' '), get_split_row(sheet, EndRow, key))
+        SumRow = get_split_row(sheet, EndRow, 'ИТОГО', InitRow) - 1
+        letter = re.split(r'\d+', obj.past.split(':')[0])[0]
+        if create_new_file == True:
+            num_letter = get_excel_range(letter) + 2
+        else:
+            num_letter = get_excel_range(letter) + 3
+        # num_letter = get_excel_range(letter)
+        end_letter = get_split_col(sheet, InitRow, num_letter + 1)
+        for col in range(num_letter, end_letter + 1):
+            init_letter = get_excel_range(col)
+            num_col = get_excel_range(init_letter)
+            for i in range(InitRow, SumRow):
+                try:
+                    recent_column = re.findall(r'\+([A-Z]+:[A-Z]+)', sheet.Range(f'{init_letter}{i}').Formula)[0]
+                    if get_excel_range(recent_column.split(':')[0]) != num_col - 1:
+                        sheet.Range(f'{init_letter}{i}').Formula = re.sub(r'\+([A-Z]+:[A-Z]+)',
+                                                                          f'+{get_excel_range(num_col - 1)}:{get_excel_range(num_col - 1)}',
+                                                                          sheet.Range(f'{init_letter}{i}').Formula)
+                except Exception as exp:
+                    continue
+def get_subpath(path, i, opt = True):
+    while i > 0:
+        if opt:
+            path = path[:path.rfind('/')]
+        else:
+            path = path[:path.rfind('\\')]
+        i-=1
+    return path
+
+def get_periods(crm_df, ddu_df, dkp_df, option=True, prd = 'Полугодие'):
+    crm_period = set(crm_df['Квартал_Год регистрации'])
+    ddu_period, dkp_period = set(ddu_df), set(dkp_df)
+    crm_period = set(re.findall(r'\d*_?\d{4}', ' '.join(crm_period)))
+    ddu_period = set(re.findall(r'\d*_?\d{4}', ' '.join(ddu_period)))
+    dkp_period = set(re.findall(r'\d*_?\d{4}', ' '.join(dkp_period)))
+
+    if not option:
+        if prd != 'Год':
+            return sorted(max([ddu_period, dkp_period, crm_period], key=lambda x: len(x)), key=lambda x: (x.split('_')[1], x.split('_')[0]))
+        else:
+            return sorted(max([ddu_period, dkp_period, crm_period], key=lambda x: len(x)))
+
+    if len(dkp_period) == len(ddu_period) == len(crm_period):
+        return sorted(crm_period, key=lambda x: (int(x.split('_')[1]), int(x.split('_')[0])))
+    elif len(crm_period)>len(dkp_period) and len(crm_period)>len(ddu_period):
+        recent_periods = list(crm_period.difference(ddu_period).difference(dkp_period))
+        return sorted(recent_periods, key=lambda x: (int(x.split('_')[1]), int(x.split('_')[0])))
+    else:
+        recent_periods = list(ddu_period.difference(crm_period).difference(dkp_period))
+        return sorted(recent_periods, key=lambda x: (int(x.split('_')[1]), int(x.split('_')[0])))
+
+def get_queue_frame(crm_file, ddu_file, dkp_file, project, prd):
+    project = project.replace('_', ' ')
+    ddu_period = ddu_file.additional_frame['Квартал_Год'] if not ddu_file.is_empty  else set()
+    dkp_period = dkp_file.additional_frame['Квартал_Год'] if not dkp_file.is_empty  else set()
+    crm_df = crm_file.additional_frame
+    crm_df['Проект'] = project
+    crm_df = crm_df[['Проект', "Очередь", "Дом"]]
+    crm_df['Очередь'] = crm_df['Очередь'].apply(str)
+    crm_df['Дом'] = crm_df['Дом'].apply(str)
+    result_frame = crm_df.groupby(['Проект', "Очередь", "Дом"], as_index=False).count()
+    period = get_periods(crm_file.additional_frame, ddu_period, dkp_period, prd)
+    result_frame = result_frame[result_frame['Очередь']!= '']
+    return result_frame, period
+
+def extend_list(period_list, current_list, prd):
+    unique_period_list = set(period_list)
+    unique_list = set(current_list)
+    result_list = unique_period_list.difference(unique_list).union(unique_list)
+    if prd != 'Год':
+        return sorted(result_list, key=lambda x: (int(x.split('_')[1]), int(x.split('_')[0])))
+    else:
+        return sorted(result_list, key=lambda x: int(x))
+
+def get_period(string, period):
+    string = str(string)
+    if string != '':
+        date_string = string.split(' ')[0]
+        if '-' in date_string:
+            pattern = '%Y-%m-%d'
+        else:
+            pattern = '%d.%m.%Y'
+        if period == 'Полугодие':
+            if datetime.strptime(date_string, pattern).date().month <= 6:
+                return '1'
+            else:
+                return '2'
+        elif period == 'Месяц':
+            return str(datetime.strptime(date_string, pattern).date().month)
+        elif period == 'Квартал':
+            return str(pd.Timestamp(datetime.strptime(date_string, pattern).date()).quarter)
+        else:
+            return str(datetime.strptime(date_string, pattern).date().year)
+    else:
+        return string
+
+def fill_date_columns(df, period, is_crm = False):
+    if is_crm:
+        if period != 'Год':
+            df['Рег_Период'] = df['registration_date'].apply(get_period, args=[period])
+            df['Рег_Год'] = df['registration_date'].apply(get_period, args=['Год'])
+            df['Рег_Период_Год'] = df['Рег_Период'] + '_' + df['Рег_Год']
+            df['Рас_Период'] = df['cancellation_date'].apply(get_period, args=[period])
+            df['Рас_Год'] = df['cancellation_date'].apply(get_period, args=['Год'])
+            df['Рас_Период_Год'] = df['Рас_Период'] + '_' + df['Рас_Год']
+        else:
+            df['Рег_Период'] = ''
+            df['Рег_Год'] = df['registration_date'].apply(get_period, args=[period])
+            df['Рег_Период_Год'] = df['Рег_Год']
+            df['Рас_Период'] = ''
+            df['Рас_Год'] = df['cancellation_date'].apply(get_period, args=[period])
+            df['Рас_Период_Год'] = df['Рас_Год']
+        df = df[['Рег_Период', 'Рег_Год', 'Рег_Период_Год', 'Рас_Период', 'Рас_Год', 'Рас_Период_Год']]
+        return df
+    else:
+        if period != 'Год':
+            df['Период'] = df['date'].apply(get_period, args=[period])
+            df['Год'] = df['date'].apply(get_period, args=['Год'])
+            df['Период_Год'] = df['Период'] + '_' + df['Год']
+        else:
+            df['Период'] = ''
+            df['Год'] = df['date'].apply(get_period, args=[period])
+            df['Период_Год'] = df['Год']
+        df = df[['Период', 'Год', 'Период_Год']]
+        short_df = df['Период_Год']
+        return (df, short_df)
+
+
+def add_columns(sheet, pivot_sheet, user_values, periods, change_period, create_new_file):
+    EndRow = get_last_row_from_column(sheet, 'B', True)
+    SplitRow = get_split_row(sheet, EndRow, 'СВЕРКА 1С и CRM') - 2
+
+    DownTableDict = {element: get_split_row(sheet, EndRow, element, SplitRow) + get_split_row(sheet, EndRow,
+                                                                                              StartRow=get_split_row(
+                                                                                                  sheet, EndRow,
+                                                                                                  element, SplitRow),
+                                                                                              option=False)
+                     for element in ['По данным 1С', 'По данным CRM', 'Разница']}
+
+    UpTableDict = {element: get_split_row(sheet, SplitRow, element) + get_split_row(sheet, SplitRow,
+                                                                                    StartRow=get_split_row(sheet,
+                                                                                                           SplitRow,
+                                                                                                           element),
+                                                                                    option=False)
+                   for element in
+                   ['Продажи тыс. руб. (накопительный итог) без учета ВГО и дополнительных корректировок',
+                    'Продажи кв.м. (накопительный итог) без учета ВГО и дополнительных корректировок']}
+    for k, v in pivot_sheet.items():
+        if user_values['--CREATE_FILE--'] or change_period:
+            v = extend_list(periods, v, user_values['--TO_PERIOD--'])
+        for element in v:
+            if k in ('AccPay', 'AccSales'):
+                check_rng = check_range(sheet, UpTableDict[list(UpTableDict.keys())[0]], element, k)
+            else:
+                check_rng = check_range(sheet, DownTableDict[list(DownTableDict.keys())[0]], element, k)
+            if check_rng:
+                obj = create_custom_range(sheet, user_values['prj'], k, EndRow, SplitRow)  # user_values['project']
+                if k == 'AccPay':
+                    sheet.Range(obj.past).Insert()
+
+                sheet.Range(obj.copy).Copy()
+                sheet.Range(obj.past).PasteSpecial(-4123)
+                sheet.Range(obj.past).PasteSpecial(8)
+                sheet.Range(obj.past).PasteSpecial(-4122)
+
+                if k in ('AccPay', "AccSales"):
+                    for key, value in UpTableDict.items():
+                        temp_range = re.sub(r'\d+', str(value), obj.past)
+                        sheet.Range(temp_range).Value = element
+                else:
+                    for key, value in DownTableDict.items():
+                        temp_range = re.sub(r'\d+', str(value), obj.past)
+                        sheet.Range(temp_range).Value = element
+
+        if k == 'AccPay' and check_rng:
+            change_range(sheet, EndRow, user_values, obj, create_new_file or change_period)
+
+def edit_date_string(date_string):
+    if date_string != None:
+        return str(date_string)
+    else:
+        return date_string
 
 def main_func(user_values, pg_bar, out):
+    create_new_file = user_values['--CREATE_FILE--']
+    periods = []
     check_report = True
     files = []
     pivot_sheet = dict()
-    Excel = win32com.client.Dispatch("Excel.Application")
-    Excel.DisplayAlerts = False
-    Excel.Visible = False
-    wb = Excel.Workbooks.Open(user_values['SummaryFile'])
-    sheet_dict = create_sheet_dict(wb)
     out.Update('Считывание файлов')
     pg_bar.Update(1)
-    for k, v in sheet_dict.items():
-        if user_values[k] == '':
-            is_empty = True
-        else:
-            is_empty = False
-        files.append(v.object(user_values[k], k, v.sheetname, is_empty, user_values['spt']))
+    if user_values['--CREATE_FILE--']:
+        crm_file = CrmFile(user_values['CRM'], 'CRM', f'CRM_{user_values["prj"].replace("-", "_")}',False if user_values['CRM']!='' else True, user_values['spt'],user_values['--TO_PERIOD--'])
+        ddu_file = AccountPayment(user_values['AccPay'], 'AccPay', f'ДДУ_{user_values["prj"].replace("-", "_")}', False if user_values['AccPay']!='' else True,
+                                    user_values['spt'], user_values['--TO_PERIOD--'])
+        dkp_file = AccountSales(user_values['AccSales'], 'AccSales', f'ДКП_{user_values["prj"].replace("-", "_")}', False if user_values['AccSales']!='' else True,
+                                  user_values['spt'], user_values['--TO_PERIOD--'])
+        files = [ddu_file, dkp_file, crm_file]
+        path = get_subpath(user_values['AccPay'], 1)
+        name = f'/СверкаCRM_{user_values["prj"]}.xlsb'
+        df, periods = get_queue_frame(crm_file, ddu_file, dkp_file, user_values['prj'], user_values["--TO_PERIOD--"])
+        open_and_fill_new_file(path, name, user_values['prj'], df, user_values["--TO_PERIOD--"])
+        user_values['SummaryFile'] = os.path.abspath((path+name))
+    Excel = win32com.client.Dispatch("Excel.Application")
+    Excel.DisplayAlerts = False
+    Excel.Visible = True
+    wb = Excel.Workbooks.Open(user_values['SummaryFile'])
+    change_period = False
+    if user_values['--FROM_PERIOD--'] != user_values['--TO_PERIOD--']:
+        change_period = True
+        new_file_name = get_subpath(user_values['SummaryFile'],1)+f'/СверкаCRM_{user_values["prj"]}_{user_values["--TO_PERIOD--"]}.xlsb'
+        wb.SaveCopyAs(os.path.abspath((new_file_name)))
+        wb.Close()
+        wb = Excel.Workbooks.Open(os.path.abspath((new_file_name)))
+        user_values['SummaryFile'] = os.path.abspath((new_file_name))
+        for sheet in wb.Sheets:
+            if 'ДДУ' in sheet.Name or 'ДКП' in sheet.Name:
+                EndRow = get_last_row_from_column(sheet, 'B', True) + 1
+                ws = wb.Worksheets(sheet.Name)
+                data = ws.Range(ws.Cells(6, 2), ws.Cells(EndRow, 2))
+                period_data = pd.DataFrame(data.Value, columns=['date'])
+                period_data.fillna('', inplace=True)
+
+                period_data, short_df = fill_date_columns(period_data, user_values['--TO_PERIOD--'])
+                if 'ДДУ' in sheet.Name:
+                    DDU_name = sheet.Name
+                    ddu_period_df = short_df
+                else:
+                    DKP_name = sheet.Name
+                    dkp_period_df = short_df
+                ws.Range(ws.Cells(6, 19),  # Cell to start the "paste"
+                            ws.Cells(6 + len(period_data.index) - 1,
+                                        19 + len(period_data.columns) - 1)  # No -1 for the index
+                            ).Value = period_data.values
+            elif 'Свод' in sheet.Name:
+                del_name = sheet.Name
+            elif 'CRM' in sheet.Name:
+                CRM_name = sheet.Name
+                ws = wb.Worksheets(sheet.Name)
+                if ws.FilterMode:
+                    ws.ShowAllData()
+                EndRow = get_last_row_from_column(ws, 'B', True)
+                data = ws.Range(ws.Cells(5, 39), ws.Cells(EndRow, 39))
+                crm_period_df = pd.DataFrame(columns=['Квартал_Год регистрации'])
+                crm_period_df.fillna('', inplace=True)
+                if user_values['--REVIEW--']:
+                    data = ws.Range(ws.Cells(5, 5), ws.Cells(EndRow, 6))
+                    data = [(edit_date_string(element[0]), edit_date_string(element[1]))  for element in data.Value]
+                    period_data = pd.DataFrame(data, columns=['registration_date', 'cancellation_date'])
+                    period_data.fillna('', inplace=True)
+                    period_data = fill_date_columns(period_data, user_values['--TO_PERIOD--'], True)
+                    ws.Range(ws.Cells(5, 37),  # Cell to start the "paste"
+                             ws.Cells(5 + len(period_data.index) - 1,
+                                      37 + len(period_data.columns) - 1)  # No -1 for the index
+                             ).Value = period_data.values
+
+        ws = wb.Worksheets(del_name)
+        BeginRow = get_split_row(ws, get_last_row_from_column(ws, 'B', True), user_values['prj'].replace('_', ' '))
+        EndRow = get_split_row(ws, get_last_row_from_column(ws, 'B', True), 'ИТОГО', BeginRow) - 2
+        prj_data = ws.Range(ws.Cells(BeginRow, 2), ws.Cells(EndRow, 4)).Value
+        df = pd.DataFrame(prj_data, columns=['Project', 'Queue', 'House'])
+        wb.Worksheets(del_name).Delete()
+        periods = get_periods(crm_period_df, ddu_period_df, set() if dkp_period_df.empty else dkp_period_df, False, user_values['--TO_PERIOD--'])
+        # period = periods[0]
+        # periods = periods[1:]
+        add = wb.Sheets.Add(Before=None, After=wb.Sheets(wb.Sheets.count))
+        add.Name = 'Свод_' + user_values['prj'].replace("-", "_")
+        if f'Словарь_{user_values["prj"].replace("-", "_")}' not in [sheet.Name for sheet in wb.Sheets]:
+            add = wb.Sheets.Add(Before=None, After=wb.Sheets(wb.Sheets.count))
+            add.Name = f'Словарь_{user_values["prj"].replace("-", "_")}'
+            ws = wb.Worksheets(f'Словарь_{user_values["prj"].replace("-", "_")}')
+            ws.Range(ws.Cells(1, 1),  # Cell to start the "paste"
+                     ws.Cells(1 + len(ROMANIAN_NUMBERS.index) - 1,
+                                 1 + len(ROMANIAN_NUMBERS.columns) - 1)  # No -1 for the index
+                     ).Value = ROMANIAN_NUMBERS.values
+        ws = wb.Worksheets('Свод_' + user_values['prj'].replace("-", "_"))
+        ws.Activate()
+        Excel.ActiveWindow.DisplayGridlines = False
+        fill_data(ws, df, DDU_name, DKP_name, CRM_name, user_values['prj'], user_values['--TO_PERIOD--'])
+        if user_values['--REVIEW--']:
+            out.Update('Считывание файлов')
+            pg_bar.Update(3)
+            if user_values['--TO_PERIOD--'] != 'Год':
+                pivot_sheet = {
+                                'AccPay': [min(periods, key=lambda x: (int(x.split('_')[1]), int(x.split('_')[0])))],
+                                'AccSales': [min(periods, key=lambda x: (int(x.split('_')[1]), int(x.split('_')[0])))],
+                                'DownTable': [min(periods, key=lambda x: (int(x.split('_')[1]), int(x.split('_')[0])))]
+                                }
+            else:
+                pivot_sheet = {
+                                'AccPay': [min(periods, key=lambda x: int(x))],
+                                'AccSales': [min(periods, key=lambda x: int(x))],
+                                'DownTable':[min(periods, key=lambda x: int(x))]
+                                }
+            add_columns(ws, pivot_sheet, user_values, periods, change_period, create_new_file)
+            wb.Save()
+            wb.Close()
+            Excel.Quit()
+            return (check_report, user_values)
+
+    if not user_values['--CREATE_FILE--']:
+        sheet_dict = create_sheet_dict(wb)
+        for k, v in sheet_dict.items():
+            if user_values[k] == '':
+                is_empty = True
+            else:
+                is_empty = False
+            files.append(v.object(user_values[k], k, v.sheetname, is_empty, user_values['spt'], user_values['--TO_PERIOD--']))
 
     try:
         out.Update('Запись в файл')
         pg_bar.Update(2)
 
         for i, obj in enumerate(files):
+            add_col = files[i].additional_column
             if files[i].type_file != 'CRM' and files[i].is_empty == False:
                 sheet = wb.Worksheets(files[i].sheet_name)
                 StartRow = get_last_row_from_column(sheet, option=False) + 2
@@ -199,6 +493,22 @@ def main_func(user_values, pg_bar, out):
                     for col in ['M:M', 'Q:Q', 'AB:AB', 'O:O']:
                         sheet.Range(col).NumberFormat = '# ##0'
                 else:
+                    spl_col = get_split_col(sheet, 4)
+                    lst = sheet.Range(sheet.Cells(4, 1), sheet.Cells(4, spl_col)).Value
+                    flat_lst = [item for sublist in lst for item in sublist]
+                    flat_lst = list(map(lambda x: x.replace(' ', '').replace('\n', ''), flat_lst))
+                    df = df[flat_lst]
+                    add_col = spl_col + 2
+
+                    # sheet.Range(sheet.Cells(StartRow - 1, files[i].column),  # Cell to start the "paste"
+                    #             sheet.Cells(StartRow - 1,
+                    #                         files[i].column + len(df.columns) - 1)  # No -1 for the index
+                    #             ).Value = df.columns
+                    #
+                    # sheet.Range(sheet.Cells(StartRow - 1, files[i].additional_column),  # Cell to start the "paste"
+                    #             sheet.Cells(StartRow - 1,
+                    #                         files[i].additional_column + len(add_df.columns) - 1)  # No -1 for the index
+                    #             ).Value = add_df.columns
                     for col in ['T:T', 'U:U', 'AR:AR', 'AS:AS']:
                         sheet.Range(col).NumberFormat = '@'
                         sheet.Range(col).Replace(',', '.')
@@ -209,11 +519,11 @@ def main_func(user_values, pg_bar, out):
                                         files[i].column + len(df.columns) - 1)  # No -1 for the index
                             ).Value = df.values
 
-                sheet.Range(sheet.Cells(StartRow, files[i].additional_column),  # Cell to start the "paste"
+                sheet.Range(sheet.Cells(StartRow, add_col),  # Cell to start the "paste"
                             sheet.Cells(StartRow + len(add_df.index) - 1,
-                                        files[i].additional_column + len(add_df.columns) - 1)  # No -1 for the index
+                                        add_col + len(add_df.columns) - 1)  # No -1 for the index
                             ).Value = add_df.values
-                UpdateEndRow = get_last_row_from_column(sheet, 'B', True)
+                UpdateEndRow = get_last_row_from_column(sheet, 'B', True) + 1
                 if files[i].type_file != 'CRM':
                     sheet.Range(f'B{6}:AB{6}').Copy()
                     sheet.Range(f'B{StartRow}:AB{UpdateEndRow}').PasteSpecial(-4122)
@@ -229,68 +539,54 @@ def main_func(user_values, pg_bar, out):
             if v == []:
                 pivot_sheet[k] = max(pivot_sheet.values(), key=lambda x: len(x))
 
-        sheet = wb.Worksheets([ws.Name for ws in wb.Sheets][0])
+        sheet = wb.Worksheets([ws.Name for ws in wb.Sheets if 'Свод' in ws.Name][0])
         pivot_sheet['DownTable'] = max(pivot_sheet.values(), key=lambda x: len(x))
 
-        EndRow = get_last_row_from_column(sheet, 'B', True)
-        SplitRow = get_split_row(sheet, EndRow, 'СВЕРКА 1С и CRM') - 2
-
-        DownTableDict = {element: get_split_row(sheet, EndRow, element, SplitRow) + get_split_row(sheet, EndRow, StartRow=get_split_row(sheet, EndRow, element, SplitRow), option=False)
-                         for element in ['По данным 1С', 'По данным CRM', 'Разница']}
-
-
-        UpTableDict = {element: get_split_row(sheet, SplitRow, element) + get_split_row(sheet, SplitRow, StartRow=get_split_row(sheet, SplitRow, element), option=False)
-                       for element in ['Продажи тыс. руб. (накопительный итог) без учета ВГО и дополнительных корректировок',
-                               'Продажи кв.м. (накопительный итог) без учета ВГО и дополнительных корректировок']}
+        # EndRow = get_last_row_from_column(sheet, 'B', True)
+        # SplitRow = get_split_row(sheet, EndRow, 'СВЕРКА 1С и CRM') - 2
+        #
+        # DownTableDict = {element: get_split_row(sheet, EndRow, element, SplitRow) + get_split_row(sheet, EndRow, StartRow=get_split_row(sheet, EndRow, element, SplitRow), option=False)
+        #                  for element in ['По данным 1С', 'По данным CRM', 'Разница']}
+        #
+        #
+        # UpTableDict = {element: get_split_row(sheet, SplitRow, element) + get_split_row(sheet, SplitRow, StartRow=get_split_row(sheet, SplitRow, element), option=False)
+        #                for element in ['Продажи тыс. руб. (накопительный итог) без учета ВГО и дополнительных корректировок',
+        #                        'Продажи кв.м. (накопительный итог) без учета ВГО и дополнительных корректировок']}
+        add_columns(sheet, pivot_sheet, user_values, periods, change_period, create_new_file)
         out.Update('Оформление СВОДа: добавление столбцов')
         pg_bar.Update(3)
-        for k, v in pivot_sheet.items():
-            for element in v:
-                if k in ('AccPay', 'AccSales'):
-                    check_rng = check_range(sheet, UpTableDict[list(UpTableDict.keys())[0]], element, k)
-                else:
-                    check_rng = check_range(sheet, DownTableDict[list(DownTableDict.keys())[0]], element, k)
-                if check_rng:
-                    obj = create_custom_range(sheet, user_values['prj'][0], k, EndRow, SplitRow) # user_values['project']
-                    if k == 'AccPay':
-                        sheet.Range(obj.past).Insert()
+        # for k, v in pivot_sheet.items():
+        #     if user_values['--CREATE_FILE--'] or change_period:
+        #         v = extend_list(periods, v)
+        #     for element in v:
+        #         if k in ('AccPay', 'AccSales'):
+        #             check_rng = check_range(sheet, UpTableDict[list(UpTableDict.keys())[0]], element, k)
+        #         else:
+        #             check_rng = check_range(sheet, DownTableDict[list(DownTableDict.keys())[0]], element, k)
+        #         if check_rng:
+        #             obj = create_custom_range(sheet, user_values['prj'][0], k, EndRow, SplitRow) # user_values['project']
+        #             if k == 'AccPay':
+        #                 sheet.Range(obj.past).Insert()
+        #
+        #             sheet.Range(obj.copy).Copy()
+        #             sheet.Range(obj.past).PasteSpecial(-4123)
+        #             sheet.Range(obj.past).PasteSpecial(8)
+        #             sheet.Range(obj.past).PasteSpecial(-4122)
+        #
+        #
+        #
+        #             if k in ('AccPay', "AccSales"):
+        #                 for key, value in UpTableDict.items():
+        #                     temp_range = re.sub(r'\d+', str(value), obj.past)
+        #                     sheet.Range(temp_range).Value = element
+        #             else:
+        #                 for key, value in DownTableDict.items():
+        #                     temp_range = re.sub(r'\d+', str(value), obj.past)
+        #                     sheet.Range(temp_range).Value = element
+        #
+        #     if k == 'AccPay' and check_rng:
+        #         change_range(sheet, EndRow, user_values, obj, create_new_file or change_period)
 
-                    sheet.Range(obj.copy).Copy()
-                    sheet.Range(obj.past).PasteSpecial(-4123)
-                    sheet.Range(obj.past).PasteSpecial(8)
-                    sheet.Range(obj.past).PasteSpecial(-4122)
-
-                    # if k == 'DownTable':
-                    #     sheet.Range(obj.past).EntireColumn.AutoFit()
-
-                    if k in ('AccPay', "AccSales"):
-                        for key, value in UpTableDict.items():
-                            temp_range = re.sub(r'\d+', str(value), obj.past)
-                            sheet.Range(temp_range).Value = element
-                    else:
-                        for key, value in DownTableDict.items():
-                            temp_range = re.sub(r'\d+', str(value), obj.past)
-                            sheet.Range(temp_range).Value = element
-
-            if k == 'AccPay' and check_rng:
-                for key, value in EditFormulasDict.items():
-                    InitRow = get_split_row(sheet, EndRow, user_values['prj'][0], get_split_row(sheet, EndRow, key))
-                    SumRow = get_split_row(sheet, EndRow, 'ИТОГО', InitRow)-1
-                    letter = re.split(r'\d+', obj.past.split(':')[0])[0]
-                    num_letter = get_excel_range(letter) + 2
-                    end_letter = get_split_col(sheet, InitRow, num_letter + 1)
-                    for col in range(num_letter, end_letter):
-                        init_letter = get_excel_range(col)
-                        num_col = get_excel_range(init_letter)
-                        for i in range(InitRow, SumRow):
-                            recent_column = re.findall(r'\+([A-Z]+:[A-Z]+)', sheet.Range(f'{init_letter}{i}').Formula)[0]
-                            if get_excel_range(recent_column.split(':')[0]) != num_col-1:
-
-                                sheet.Range(f'{init_letter}{i}').Formula = re.sub(r'\+([A-Z]+:[A-Z]+)',
-                                                                                  f'+{get_excel_range(num_col-2)}:{get_excel_range(num_col-2)}',
-                                                                                  sheet.Range(f'{init_letter}{i}').Formula)
-
-                pass
         if user_values['--ADD_STRING--']:
             out.Update('Оформление СВОДа: добавление строк')
             pg_bar.Update(4)
@@ -302,4 +598,4 @@ def main_func(user_values, pg_bar, out):
         wb.Save()
         wb.Close()
         Excel.Quit()
-        return check_report
+        return (check_report, user_values)

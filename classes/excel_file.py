@@ -5,18 +5,20 @@ from datetime import datetime
 import re
 
 class AccountFile:
-    def __init__(self, path, type_file, name, is_empty, spt_data):
+    def __init__(self, path, type_file, name, is_empty, spt_data, period):
         if is_empty:
             self.path = path
             self.type_file = type_file
             self.is_empty = is_empty
             self.sheet_name = name
             self.spt_data = spt_data
+            self.period = period
         else:
             self.path = path
             self.type_file = type_file
             self.is_empty = is_empty
             self.spt_data = spt_data
+            self.period = period
             if spt_data != '':
                 self.house_list = self.create_house_list(spt_data)
             self.column = 2
@@ -144,7 +146,7 @@ class AccountFile:
                                               'Тип контрагента', 'Договор', 'Сумма'])
         additional_df = self.fill_sum_column(additional_df)
         self.df.fillna('', inplace=True)
-        additional_df = self.__fill_date_columns(additional_df, self.df)
+        additional_df = self.__fill_date_columns(additional_df, self.df, self.period)
         additional_df = self.fill_queue_and_house(additional_df)
         additional_df = self.fill_type_column(additional_df)
         if self.type_file == 'AccPay':
@@ -167,24 +169,26 @@ class AccountFile:
         add_df.loc[self.df['13_Счет КТ'] == '51', 'Тип'] = 'Возврат ДС'
         add_df.loc[self.df['3_Документ'].str.lower().str.contains('заключение|изменение условий', na=False), 'Тип'] = 'Заключение'
         add_df.loc[self.df['3_Документ'].str.lower().str.contains('расторжение|аннулирование', na=False ), 'Тип'] = 'Расторжение'
-        # for i in range(len(self.df)):
-        #     if  self.df['11_Счет ДТ'][i] == '51':
-        #         add_df['Тип'][i] = 'Поступление ДС'
-        #     elif self.df['13_Счет КТ'][i] == '51':
-        #         add_df['Тип'][i] = 'Возврат ДС'
-        #     elif self.df['3_Документ'][i] in ('Заключение', 'Изменение условий'):
-        #         add_df['Тип'][i] = 'Заключение'
-        #     elif self.df['3_Документ'][i] in ('Расторжение', 'Аннулирование'):
-        #         add_df['Тип'][i] = 'Расторжение'
-        #     else:
-        #         add_df['Тип'][i] = 'Прочее движение'
         return add_df
 
     @staticmethod
-    def __fill_date_columns(add_df, data):
-        add_df['Полугодие'] = data['1_Период'].apply(lambda x: '1' if datetime.strptime(x, '%d.%m.%Y').date().month<=6 else '2')
-        add_df['Год'] = data['1_Период'].apply(lambda x: str(datetime.strptime(x, '%d.%m.%Y').date().year))
-        add_df['Квартал_Год'] = add_df['Полугодие'] + '_' + add_df['Год']
+    def __fill_date_columns(add_df, data, period):
+        if period == 'Полугодие':
+            add_df['Полугодие'] = data['1_Период'].apply(lambda x: '1' if datetime.strptime(x, '%d.%m.%Y').date().month<=6 else '2')
+            add_df['Год'] = data['1_Период'].apply(lambda x: str(datetime.strptime(x, '%d.%m.%Y').date().year))
+            add_df['Квартал_Год'] = add_df['Полугодие'] + '_' + add_df['Год']
+        elif period == 'Месяц':
+            add_df['Полугодие'] = data['1_Период'].apply(lambda x: str(datetime.strptime(x, '%d.%m.%Y').date().month))
+            add_df['Год'] = data['1_Период'].apply(lambda x: str(datetime.strptime(x, '%d.%m.%Y').date().year))
+            add_df['Квартал_Год'] = add_df['Полугодие'] + '_' + add_df['Год']
+        elif period == 'Год':
+            add_df['Полугодие'] = ''
+            add_df['Год'] = data['1_Период'].apply(lambda x: str(datetime.strptime(x, '%d.%m.%Y').date().year))
+            add_df['Квартал_Год'] = add_df['Год']
+        else:
+            add_df['Полугодие'] = data['1_Период'].apply(lambda x: str(pd.Timestamp(datetime.strptime(x, '%d.%m.%Y').date()).quarter))
+            add_df['Год'] = data['1_Период'].apply(lambda x: str(datetime.strptime(x, '%d.%m.%Y').date().year))
+            add_df['Квартал_Год'] = add_df['Полугодие'] + '_' + add_df['Год']
         return add_df
 
 
@@ -222,14 +226,14 @@ class AccountFile:
                 return string
 
 class AccountPayment(AccountFile):
-    def __init__(self, path, type_file, name, is_empty, spt_data):
-        super().__init__(path, type_file, name, is_empty, spt_data)
+    def __init__(self, path, type_file, name, is_empty, spt_data, period):
+        super().__init__(path, type_file, name, is_empty, spt_data, period)
 
 class AccountSales(AccountFile):
     DOCUMNETS = ['реализация', 'корректировка реализации', 'отчет комитенту', 'передача']
     NOMENCLATURE = ['аренда', "вознаграждение агента", 'услуги связи', 'сертификат']
-    def __init__(self, path, type_file, name, is_empty, spt_data):
-        super().__init__(path, type_file, name, is_empty, spt_data)
+    def __init__(self, path, type_file, name, is_empty, spt_data, period):
+        super().__init__(path, type_file, name, is_empty, spt_data, period)
 
     def fill_queue_and_house(self, add_df):
         add_df['Очередь'] = self.df['7_Аналитика КТ'].apply(self.get_queue)

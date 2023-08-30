@@ -18,18 +18,20 @@ class CrmFile:
                                 'Очередь', 'Дом', 'Учитывается(нет/да)', 'Контрагент', 'Тип контрагента (Партнер или нет)',
                                 'Договор', 'Площадь', 'Сумма', 'Комментарий', 'Расторгнут?(да/нет)', 'Корректировка м.2',
                                 'Корректировка тыс.руб.']
-    def __init__(self, path, type_file, name, is_empty, spt_data):
+    def __init__(self, path, type_file, name, is_empty, spt_data, period):
         if is_empty:
             self.path = path
             self.type_file = type_file
             self.is_empty = is_empty
             self.sheet_name = name
             self.spt_data = spt_data
+            self.period = period
         else:
             self.path = path
             self.type_file = type_file
             self.is_empty = is_empty
             self.spt_data = spt_data
+            self.period = period
             self.column = 1
             self.additional_column = 37
             self.sheet_name = name
@@ -66,7 +68,7 @@ class CrmFile:
             house_dict = self.create_house_dict(self.spt_data)
             add_df['Дом'] = self.df['Корпус Номер'].apply(lambda x: house_dict.get(x))
         add_df['Контрагент'], add_df['Договор'] = self.df['Контрагент'], self.df['№ Договора']
-        add_df = self.__fill_date_columns(add_df, self.df)
+        add_df = self.__fill_date_columns(add_df)
 
         add_df['Очередь'] = self.df['Очередь'].apply(self.__fill_queue)
         add_df['Учитывается(нет/да)'] = np.where(self.df['Контрагент'] == 'ООО "САМОЛЕТ-НЕДВИЖИМОСТЬ МСК"', 'Нет', 'Да')
@@ -112,37 +114,81 @@ class CrmFile:
             return numbers[0]
         else:
             return string
+    # @staticmethod
+    # def __fill_date_columns(add_df, data):
+    #     for i in range(len(add_df)):
+    #         if data['Дата_рег договора'][i]!= '':
+    #             string = data['Дата_рег договора'][i].split(' ')[0]
+    #             if '-' in data['Дата_рег договора'][i]:
+    #                 add_df['Квартал регистрации договора'][i] = '1' if datetime.strptime(string,
+    #                                                                                      '%Y-%m-%d').date().month <= 6 else '2'
+    #                 add_df['Год регистрации'][i] = str(
+    #                     datetime.strptime(string, '%Y-%m-%d').date().year)
+    #                 add_df['Квартал_Год регистрации'][i] = add_df['Квартал регистрации договора'][i] + '_' + \
+    #                                                        add_df['Год регистрации'][i]
+    #             else:
+    #                 add_df['Квартал регистрации договора'][i] = '1' if datetime.strptime(data['Дата_рег договора'][i], '%d.%m.%Y').date().month<=6 else '2'
+    #                 add_df['Год регистрации'][i] = str(datetime.strptime(data['Дата_рег договора'][i], '%d.%m.%Y').date().year)
+    #                 add_df['Квартал_Год регистрации'][i] = add_df['Квартал регистрации договора'][i] + '_' + add_df['Год регистрации'][i]
+    #             if data['Дата раст.-я'][i]!= '':
+    #                 string = data['Дата раст.-я'][i].split(' ')[0]
+    #                 if '-' in data['Дата раст.-я'][i]:
+    #                     add_df['Квартал расторжения договора'][i] = '1' if datetime.strptime(string,
+    #                                                                                          '%Y-%m-%d').date().month <= 6 else '2'
+    #                     add_df['Год расторжения'][i] = str(
+    #                         datetime.strptime(string, '%Y-%m-%d').date().year)
+    #                     add_df['Квартал_Год расторжения'][i] = add_df['Квартал расторжения договора'][i] + '_' + \
+    #                                                            add_df['Год расторжения'][i]
+    #                 else:
+    #                     add_df['Квартал расторжения договора'][i] = '1' if datetime.strptime(string,
+    #                                                                                          '%d.%m.%Y').date().month <= 6 else '2'
+    #                     add_df['Год расторжения'][i] = str(datetime.strptime(string, '%d.%m.%Y').date().year)
+    #                     add_df['Квартал_Год расторжения'][i] = add_df['Квартал расторжения договора'][i] + '_' + \
+    #                                                    add_df['Год расторжения'][i]
+    #     return add_df
     @staticmethod
-    def __fill_date_columns(add_df, data):
-        for i in range(len(add_df)):
-            if data['Дата_рег договора'][i]!= '':
-                string = data['Дата_рег договора'][i].split(' ')[0]
-                if '-' in data['Дата_рег договора'][i]:
-                    add_df['Квартал регистрации договора'][i] = '1' if datetime.strptime(string,
-                                                                                         '%Y-%m-%d').date().month <= 6 else '2'
-                    add_df['Год регистрации'][i] = str(
-                        datetime.strptime(string, '%Y-%m-%d').date().year)
-                    add_df['Квартал_Год регистрации'][i] = add_df['Квартал регистрации договора'][i] + '_' + \
-                                                           add_df['Год регистрации'][i]
+    def get_period(string, period):
+        if string != '':
+            date_string = string.split(' ')[0]
+            if '-' in date_string:
+                pattern = '%Y-%m-%d'
+            else:
+                pattern = '%d.%m.%Y'
+            if period == 'Полугодие':
+                if datetime.strptime(date_string, pattern).date().month <= 6:
+                    return '1'
                 else:
-                    add_df['Квартал регистрации договора'][i] = '1' if datetime.strptime(data['Дата_рег договора'][i], '%d.%m.%Y').date().month<=6 else '2'
-                    add_df['Год регистрации'][i] = str(datetime.strptime(data['Дата_рег договора'][i], '%d.%m.%Y').date().year)
-                    add_df['Квартал_Год регистрации'][i] = add_df['Квартал регистрации договора'][i] + '_' + add_df['Год регистрации'][i]
-                if data['Дата раст.-я'][i]!= '':
-                    string = data['Дата раст.-я'][i].split(' ')[0]
-                    if '-' in data['Дата раст.-я'][i]:
-                        add_df['Квартал расторжения договора'][i] = '1' if datetime.strptime(string,
-                                                                                             '%Y-%m-%d').date().month <= 6 else '2'
-                        add_df['Год расторжения'][i] = str(
-                            datetime.strptime(string, '%Y-%m-%d').date().year)
-                        add_df['Квартал_Год расторжения'][i] = add_df['Квартал расторжения договора'][i] + '_' + \
-                                                               add_df['Год расторжения'][i]
-                    else:
-                        add_df['Квартал расторжения договора'][i] = '1' if datetime.strptime(string,
-                                                                                             '%d.%m.%Y').date().month <= 6 else '2'
-                        add_df['Год расторжения'][i] = str(datetime.strptime(string, '%d.%m.%Y').date().year)
-                        add_df['Квартал_Год расторжения'][i] = add_df['Квартал расторжения договора'][i] + '_' + \
-                                                       add_df['Год расторжения'][i]
+                    return '2'
+            elif period == 'Месяц':
+                return str(datetime.strptime(date_string, pattern).date().month)
+            elif period == 'Квартал':
+                return str(pd.Timestamp(datetime.strptime(date_string, pattern).date()).quarter)
+            else:
+                return str(datetime.strptime(date_string, pattern).date().year)
+        else:
+            return string
+
+
+    def __fill_date_columns(self, add_df):
+        if self.period != 'Год':
+            add_df['Квартал регистрации договора'] = self.df['Дата_рег договора'].apply(self.get_period, args=[self.period])
+            add_df['Год регистрации'] = self.df['Дата_рег договора'].apply(self.get_period, args=['Год'])
+            add_df['Квартал_Год регистрации'] = add_df['Квартал регистрации договора'] + '_' + \
+                                                               add_df['Год регистрации']
+
+            add_df['Квартал расторжения договора'] = self.df['Дата раст.-я'].apply(self.get_period, args=[self.period])
+            add_df['Год расторжения'] = self.df['Дата раст.-я'].apply(self.get_period, args=['Год'])
+            add_df['Квартал_Год расторжения'] = add_df['Квартал расторжения договора'] + '_' + \
+                                                   add_df['Год расторжения']
+        else:
+            add_df['Квартал регистрации договора'] = ''
+            add_df['Год регистрации'] = self.df['Дата_рег договора'].apply(self.get_period, args=[self.period])
+            add_df['Квартал_Год регистрации'] = add_df['Год регистрации']
+
+            add_df['Квартал расторжения договора'] = ''
+            add_df['Год расторжения'] = self.df['Дата раст.-я'].apply(self.get_period, args=[self.period])
+            add_df['Квартал_Год расторжения'] = add_df['Год расторжения']
+
         return add_df
 
     @staticmethod

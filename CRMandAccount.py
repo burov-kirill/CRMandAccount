@@ -37,7 +37,7 @@ if __name__ == '__main__':
         if event in ('Выход', sg.WIN_CLOSED):
             sys.exit()
         elif default_event:
-            check_report = main_func(user_values, pg_bar, out)
+            check_report, user_values = main_func(user_values, pg_bar, out)
             break
     window.close()
 
