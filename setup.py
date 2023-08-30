@@ -17,7 +17,7 @@ zip_include_packages = ['PySimpleGUI','altgraph', 'asgiref','charset-normalizer'
 options = {
       'build_exe': {
           'include_files': includefiles,
-            'excludes': excludes,
+            # 'excludes': excludes,
             'build_exe': 'build_windows',
             # 'zip_include_packages': zip_include_packages,
             "zip_include_packages": "*",
