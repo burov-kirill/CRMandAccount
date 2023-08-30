@@ -409,9 +409,22 @@ def fill_data(ws,df, DDU_name, DKP_name, CRM_name, prj, period):
 
         StartRow+=3
         ws.Range(ws.Cells(StartRow, 2),  # Cell to start the "paste"
+                 ws.Cells(StartRow + len(df.index) - 1,
+                          2 + len(df.columns) - 1)  # No -1 for the index
+                 ).NumberFormat = '@'
+        ws.Range(ws.Cells(StartRow, 2),  # Cell to start the "paste"
                     ws.Cells(StartRow + len(df.index) - 1,
                                 2 + len(df.columns) - 1)  # No -1 for the index
                     ).Value = df.values
+        ws.Range(ws.Cells(StartRow, 2),  # Cell to start the "paste"
+                 ws.Cells(StartRow + len(df.index) - 1,
+                          2 + len(df.columns) - 1)  # No -1 for the index
+                 ).NumberFormat = '@'
+
+        ws.Range(ws.Cells(StartRow, 2),  # Cell to start the "paste"
+                 ws.Cells(StartRow + len(df.index) - 1,
+                          2 + len(df.columns) - 1)  # No -1 for the index
+                 ).Replace(',', '.')
         rng = ws.Range(ws.Cells(StartRow-3, 2), (ws.Cells(StartRow+len(df) + 1, 10*length+4)))
 
         set_border(ws, rng, StartRow - 3, 2, StartRow + len(df)+1, 10*length+4, rgbToInt(v[0]), True)
@@ -508,9 +521,17 @@ def fill_data(ws,df, DDU_name, DKP_name, CRM_name, prj, period):
 
             StartRow += 4
             ws.Range(ws.Cells(StartRow, 2),  # Cell to start the "paste"
+                     ws.Cells(StartRow + len(df.index) - 1,
+                              2 + len(df.columns) - 1)  # No -1 for the index
+                     ).NumberFormat = '@'
+            ws.Range(ws.Cells(StartRow, 2),  # Cell to start the "paste"
                          ws.Cells(StartRow + len(df.index) - 1,
                                   2 + len(df.columns) - 1)  # No -1 for the index
                          ).Value = df.values
+            ws.Range(ws.Cells(StartRow, 2),  # Cell to start the "paste"
+                     ws.Cells(StartRow + len(df.index) - 1,
+                              2 + len(df.columns) - 1)  # No -1 for the index
+                     ).Replace(',', '.')
             for i in range(len(df)):
                 ws.Cells(StartRow + i, 5 + prd).Interior.Color = rgbToInt((221, 235, 247))
                 ws.Cells(StartRow + i, 5 + prd + len(periods) + 1).Interior.Color = rgbToInt((221, 235, 247))
@@ -611,9 +632,9 @@ def fill_data(ws,df, DDU_name, DKP_name, CRM_name, prj, period):
         StartRow += len(df) + 3
         # for col in ['B', 'C', 'D', 'E', 'G']:
         #     ws.Range(f'{col}:{col}').EntireColumn.AutoFit()
-    for col in ['C:C', 'D:D']:
-        ws.Range(col).NumberFormat = '@'
-        ws.Range(col).Replace(',', '.')
+    # for col in ['C:C', 'D:D']:
+    #     ws.Range(col).NumberFormat = '@'
+    #     ws.Range(col).Replace(',', '.')
     ws.Cells(2, 2).Value = f'СЗ САМОЛЕТ - {prj}'
     decorate_cells(ws.Cells(2, 2), (255, 255, 255), (0, 0, 0), 20, 'Arial', True, True)
     ws.Cells(4, 2).Value = 'Проверка полноты отражения данных'

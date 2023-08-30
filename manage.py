@@ -359,7 +359,7 @@ def main_func(user_values, pg_bar, out):
         user_values['SummaryFile'] = os.path.abspath((path+name))
     Excel = win32com.client.Dispatch("Excel.Application")
     Excel.DisplayAlerts = False
-    Excel.Visible = True
+    Excel.Visible = False
     wb = Excel.Workbooks.Open(user_values['SummaryFile'])
     change_period = False
     if user_values['--FROM_PERIOD--'] != user_values['--TO_PERIOD--']:
