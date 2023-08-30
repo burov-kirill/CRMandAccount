@@ -611,6 +611,9 @@ def fill_data(ws,df, DDU_name, DKP_name, CRM_name, prj, period):
         StartRow += len(df) + 3
         # for col in ['B', 'C', 'D', 'E', 'G']:
         #     ws.Range(f'{col}:{col}').EntireColumn.AutoFit()
+    for col in ['C:C', 'D:D']:
+        ws.Range(col).NumberFormat = '@'
+        ws.Range(col).Replace(',', '.')
     ws.Cells(2, 2).Value = f'СЗ САМОЛЕТ - {prj}'
     decorate_cells(ws.Cells(2, 2), (255, 255, 255), (0, 0, 0), 20, 'Arial', True, True)
     ws.Cells(4, 2).Value = 'Проверка полноты отражения данных'
