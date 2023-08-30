@@ -291,7 +291,7 @@ def fill_data(ws,df, DDU_name, DKP_name, CRM_name, prj, period):
                 for p, prd in enumerate(v[2], i):
                     formula = '=ЕСЛИ(ЕОШИБКА(ПОИСК("_";IA227;1));СЦЕП(IA227;" год");СЦЕП(ВПР(ПСТР(IA227;1;ПОИСК("_";IA227;1)-1)+0;Тех_Список!A:B;2;0);"-е ";ПРАВСИМВ(IA227;4);" года"))'
                     ws.Cells(StartRow, p+count*10-int(bool(count))*count).Value = f'=IF(ISERROR(SEARCH("_",{get_column_letter(p+count*10-int(bool(count))*count)}{StartRow - 1},1)),' \
-                                                  f'CONCAT({get_column_letter(p+count*10-int(bool(count))*count)}{StartRow - 1}," год"),CONCAT(VLOOKUP(MID({get_column_letter(p+count*10-int(bool(count))*count)}{StartRow - 1},' \
+                                                  f'CONCATENATE({get_column_letter(p+count*10-int(bool(count))*count)}{StartRow - 1}," год"),CONCATENATE(VLOOKUP(MID({get_column_letter(p+count*10-int(bool(count))*count)}{StartRow - 1},' \
                                                   f'1,SEARCH("_",{get_column_letter(p+count*10-int(bool(count))*count)}{StartRow - 1})-1)+0,Словарь_{prj.replace("-","_")}!$A:$B,2,0),"-е ",' \
                                                   f'RIGHT({get_column_letter(p+count*10-int(bool(count))*count)}{StartRow - 1},4)," года"))'
                     # ws.Cells(StartRow,
@@ -304,7 +304,7 @@ def fill_data(ws,df, DDU_name, DKP_name, CRM_name, prj, period):
                         align_cells(ws.Range(ws.Cells(StartRow, p+count*10-int(bool(count))*count), ws.Cells(StartRow, p + 1 + count*10-int(bool(count))*count)), v[0], v[1])
                         ws.Cells(StartRow,
                                  p +count*10 + 6-int(bool(count))*count).Value = f'=IF(ISERROR(SEARCH("_",{get_column_letter(p+6+count*10-int(bool(count))*count)}{StartRow - 1},1)),' \
-                                            f'CONCAT({get_column_letter(p+6+count*10-int(bool(count))*count)}{StartRow - 1}," год"),CONCAT(VLOOKUP(MID({get_column_letter(p+6+count*10-int(bool(count))*count)}{StartRow - 1},' \
+                                            f'CONCATENATE({get_column_letter(p+6+count*10-int(bool(count))*count)}{StartRow - 1}," год"),CONCATENATE(VLOOKUP(MID({get_column_letter(p+6+count*10-int(bool(count))*count)}{StartRow - 1},' \
                                             f'1,SEARCH("_",{get_column_letter(p+6+count*10-int(bool(count))*count)}{StartRow - 1})-1)+0,Словарь_{prj.replace("-","_")}!$A:$B,2,0),"-е ",RIGHT({get_column_letter(p+6+count*10-int(bool(count))*count)}{StartRow - 1},4)," года"))'
                         # ws.Cells(StartRow,
                         #          i + 6).Value = f'=CONCAT(IF(LEFT({get_column_letter(i+6)}{StartRow - 1},1)="1","I-е ","II-е "),RIGHT({get_column_letter(i+6)}{StartRow - 1},4)," года")'
@@ -488,12 +488,12 @@ def fill_data(ws,df, DDU_name, DKP_name, CRM_name, prj, period):
                     #
                     # align_cells(ws.Cells(StartRow, i), v[0], v[1])
                     ws.Cells(StartRow + 1, i + prd).Value = f'=IF(ISERROR(SEARCH("_",{get_column_letter(i + prd)}{Sales_metres_row},1)),' \
-                                                  f'CONCAT({get_column_letter(i + prd)}{Sales_metres_row}," год"),CONCAT(VLOOKUP(MID({get_column_letter(i + prd)}{Sales_metres_row},' \
+                                                  f'CONCATENATE({get_column_letter(i + prd)}{Sales_metres_row}," год"),CONCATENATE(VLOOKUP(MID({get_column_letter(i + prd)}{Sales_metres_row},' \
                                                   f'1,SEARCH("_",{get_column_letter(i + prd)}{Sales_metres_row})-1)+0,Словарь_{prj.replace("-","_")}!$A:$B,2,0),"-е ",' \
                                                   f'RIGHT({get_column_letter(i + prd)}{Sales_metres_row},4)," года"))'
 
                     ws.Cells(StartRow + 1, i + len(periods) + prd + 1).Value = f'=IF(ISERROR(SEARCH("_",{get_column_letter(i + len(periods) + prd + 1)}{Sales_metres_row},1)),' \
-                                                  f'CONCAT({get_column_letter(i + len(periods) + prd + 1)}{Sales_metres_row}," год"),CONCAT(VLOOKUP(MID({get_column_letter(i + len(periods) + prd + 1)}{Sales_metres_row},' \
+                                                  f'CONCATENATE({get_column_letter(i + len(periods) + prd + 1)}{Sales_metres_row}," год"),CONCATENATE(VLOOKUP(MID({get_column_letter(i + len(periods) + prd + 1)}{Sales_metres_row},' \
                                                   f'1,SEARCH("_",{get_column_letter(i + len(periods) + prd + 1)}{Sales_metres_row})-1)+0,Словарь_{prj.replace("-","_")}!$A:$B,2,0),"-е ",' \
                                                   f'RIGHT({get_column_letter(i + len(periods) + prd + 1)}{Sales_metres_row},4)," года"))'
                     # ws.Cells(StartRow + 1, i).Value = f'=CONCAT(IF(LEFT({get_column_letter(i)}{Sales_metres_row},1)="1","I-е ","II-е "),RIGHT({get_column_letter(i)}{Sales_metres_row},4)," года")'
