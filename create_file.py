@@ -327,65 +327,65 @@ def fill_data(ws,df, DDU_name, DKP_name, CRM_name, prj, period):
                                 if k == 'По данным 1С':
                                     if 'ДДУ' in key:
                                         ws.Cells(StartRow + 3 + row, j).Formula = f'=SUMIFS({DDU_name}!$AB:$AB,' \
-                                                                                f'{DDU_name}!$X:$X,@${StartRow + 2}:${StartRow + 2},' \
-                                                                                f'{DDU_name}!$U:$U,@${StartRow-1}:${StartRow-1},' \
-                                                                                f'{DDU_name}!$V:$V,@$C:$C,{DDU_name}!$W:$W,@$D:$D)'
+                                                                                f'{DDU_name}!$X:$X,${StartRow + 2}:${StartRow + 2},' \
+                                                                                f'{DDU_name}!$U:$U,${StartRow-1}:${StartRow-1},' \
+                                                                                f'{DDU_name}!$V:$V,$C:$C,{DDU_name}!$W:$W,$D:$D)'
                                     else:
                                         ws.Cells(StartRow + 3 + row, j).Formula = f'=SUMIFS({DKP_name}!$AB:$AB,' \
-                                                                                f'{DKP_name}!$X:$X,@${StartRow + 2}:${StartRow + 2},' \
-                                                                                f'{DKP_name}!$U:$U,@${StartRow-1}:${StartRow-1},' \
-                                                                                f'{DKP_name}!$V:$V,@$C:$C,{DKP_name}!$W:$W,@$D:$D)'
+                                                                                f'{DKP_name}!$X:$X,${StartRow + 2}:${StartRow + 2},' \
+                                                                                f'{DKP_name}!$U:$U,${StartRow-1}:${StartRow-1},' \
+                                                                                f'{DKP_name}!$V:$V,$C:$C,{DKP_name}!$W:$W,$D:$D)'
                                 elif k == 'По данным CRM':
                                     if 'ДДУ' in key:
                                         if 'тыс.руб.' in head:
                                             if 'Заключение' in head:
                                                 ws.Cells(StartRow + 3 + row, j).Formula = f'=SUMIFS({CRM_name}!$AY:$AY,' \
-                                                                                        f'{CRM_name}!$AM:$AM,@${StartRow-1}:${StartRow-1},{CRM_name}' \
-                                                                                        f'!$AR:$AR,@$C:$C,{CRM_name}!$AS:$AS,@$D:$D,' \
+                                                                                        f'{CRM_name}!$AM:$AM,${StartRow-1}:${StartRow-1},{CRM_name}' \
+                                                                                        f'!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,' \
                                                                                         f'{CRM_name}!$AQ:$AQ,"ДДУ")'
                                             else:
                                                 ws.Cells(StartRow + 3 + row, j).Formula = f'=SUMIFS({CRM_name}!$AY:$AY,' \
-                                                                                        f'{CRM_name}!$AP:$AP,@${StartRow - 1}:${StartRow - 1},{CRM_name}' \
-                                                                                        f'!$AR:$AR,@$C:$C,{CRM_name}!$AS:$AS,@$D:$D,' \
+                                                                                        f'{CRM_name}!$AP:$AP,${StartRow - 1}:${StartRow - 1},{CRM_name}' \
+                                                                                        f'!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,' \
                                                                                         f'{CRM_name}!$AQ:$AQ,"ДДУ")'
                                         else:
                                             if 'Заключение' in head:
                                                 ws.Cells(StartRow + 3 + row, j).Formula = f'=SUMIFS({CRM_name}!$AX:$AX,' \
-                                                                                        f'{CRM_name}!$AM:$AM,@${StartRow - 1}:${StartRow - 1},{CRM_name}' \
-                                                                                        f'!$AR:$AR,@$C:$C,{CRM_name}!$AS:$AS,@$D:$D,' \
+                                                                                        f'{CRM_name}!$AM:$AM,${StartRow - 1}:${StartRow - 1},{CRM_name}' \
+                                                                                        f'!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,' \
                                                                                         f'{CRM_name}!$AQ:$AQ,"ДДУ")'
                                             else:
                                                 ws.Cells(StartRow + 3 + row, j).Formula = f'=SUMIFS({CRM_name}!$AX:$AX,' \
-                                                                                        f'{CRM_name}!$AP:$AP,@${StartRow - 1}:${StartRow - 1},{CRM_name}' \
-                                                                                        f'!$AR:$AR,@$C:$C,{CRM_name}!$AS:$AS,@$D:$D,' \
+                                                                                        f'{CRM_name}!$AP:$AP,${StartRow - 1}:${StartRow - 1},{CRM_name}' \
+                                                                                        f'!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,' \
                                                                                         f'{CRM_name}!$AQ:$AQ,"ДДУ")'
                                     else:
                                         if 'тыс.руб.' in head:
                                             if 'Заключение' in head:
                                                 ws.Cells(StartRow + 3 + row, j).Formula = f'=SUMIFS({CRM_name}!$AY:$AY,' \
-                                                                                        f'{CRM_name}!$AM:$AM,@${StartRow-1}:${StartRow-1},{CRM_name}' \
-                                                                                        f'!$AR:$AR,@$C:$C,{CRM_name}!$AS:$AS,@$D:$D,' \
+                                                                                        f'{CRM_name}!$AM:$AM,${StartRow-1}:${StartRow-1},{CRM_name}' \
+                                                                                        f'!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,' \
                                                                                         f'{CRM_name}!$AQ:$AQ,"ДКП")'
                                             else:
                                                 ws.Cells(StartRow + 3 + row, j).Formula = f'=SUMIFS({CRM_name}!$AY:$AY,' \
-                                                                                        f'{CRM_name}!$AP:$AP,@${StartRow - 1}:${StartRow - 1},{CRM_name}' \
-                                                                                        f'!$AR:$AR,@$C:$C,{CRM_name}!$AS:$AS,@$D:$D,' \
+                                                                                        f'{CRM_name}!$AP:$AP,${StartRow - 1}:${StartRow - 1},{CRM_name}' \
+                                                                                        f'!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,' \
                                                                                         f'{CRM_name}!$AQ:$AQ,"ДКП")'
                                         else:
                                             if 'Заключение' in head:
                                                 ws.Cells(StartRow + 3 + row, j).Formula = f'=SUMIFS({CRM_name}!$AX:$AX,' \
-                                                                                        f'{CRM_name}!$AM:$AM,@${StartRow - 1}:${StartRow - 1},{CRM_name}' \
-                                                                                        f'!$AR:$AR,@$C:$C,{CRM_name}!$AS:$AS,@$D:$D,' \
+                                                                                        f'{CRM_name}!$AM:$AM,${StartRow - 1}:${StartRow - 1},{CRM_name}' \
+                                                                                        f'!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,' \
                                                                                         f'{CRM_name}!$AQ:$AQ,"ДКП")'
                                             else:
                                                 ws.Cells(StartRow + 3 + row, j).Formula = f'=SUMIFS({CRM_name}!$AX:$AX,' \
-                                                                                        f'{CRM_name}!$AP:$AP,@${StartRow - 1}:${StartRow - 1},{CRM_name}' \
-                                                                                        f'!$AR:$AR,@$C:$C,{CRM_name}!$AS:$AS,@$D:$D,' \
+                                                                                        f'{CRM_name}!$AP:$AP,${StartRow - 1}:${StartRow - 1},{CRM_name}' \
+                                                                                        f'!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,' \
                                                                                         f'{CRM_name}!$AQ:$AQ,"ДКП")'
 
                                 else:
                                     # ws.Cells(StartRow + 3 + row, j).Value = f'=@134:134-@147:147'
-                                    ws.Cells(StartRow + 3 + row, j).Value = f'=@{BIT_row+row}:{BIT_row+row}-@{CRM_row+row}:{CRM_row+row}'
+                                    ws.Cells(StartRow + 3 + row, j).Value = f'={BIT_row+row}:{BIT_row+row}-{CRM_row+row}:{CRM_row+row}'
 
                             ws.Cells(StartRow + 3 + len(df), j).Value = ''  # format
                             ws.Cells(StartRow + 3 + len(df) + 1,
@@ -518,63 +518,63 @@ def fill_data(ws,df, DDU_name, DKP_name, CRM_name, prj, period):
                 ws.Cells(StartRow + i, 5 + prd + len(periods) + 1).NumberFormat = '# ###;(# ###);"-"'
 
                 if k == 'Продажи кв.м. (накопительный итог) без учета ВГО и дополнительных корректировок':
-                    ws.Cells(StartRow + i, 5 + prd).Formula = f'=IF({get_column_letter(5 + prd - 1)}${StartRow-4}="Дом",SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row-4}:${CRM_row-4},@${Sales_metres_row}:${Sales_metres_row},${CRM_row-5}:${CRM_row-5},"ДДУ"),' \
-                                                      f'SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row-4}:${CRM_row-4},@${Sales_metres_row}:${Sales_metres_row},${CRM_row-5}:${CRM_row-5},"ДДУ")+@{get_column_letter(5 + prd - 1)}:{get_column_letter(5 + prd - 1)})'
+                    ws.Cells(StartRow + i, 5 + prd).Formula = f'=IF({get_column_letter(5 + prd - 1)}${StartRow-4}="Дом",SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row-4}:${CRM_row-4},${Sales_metres_row}:${Sales_metres_row},${CRM_row-5}:${CRM_row-5},"ДДУ"),' \
+                                                      f'SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row-4}:${CRM_row-4},${Sales_metres_row}:${Sales_metres_row},${CRM_row-5}:${CRM_row-5},"ДДУ")+{get_column_letter(5 + prd - 1)}:{get_column_letter(5 + prd - 1)})'
 
-                    ws.Cells(StartRow + i, 5 + prd + len(periods) + 1).Formula = f'=IF({get_column_letter(5 + prd + len(periods))}{StartRow + i}="",SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row-4}:${CRM_row-4},@${Sales_metres_row}:${Sales_metres_row},${CRM_row-5}:${CRM_row-5},"ДКП"),' \
-                                                      f'SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row-4}:${CRM_row-4},@${Sales_metres_row}:${Sales_metres_row},${CRM_row-5}:${CRM_row-5},"ДКП")+@{get_column_letter(5 + prd + len(periods))}:{get_column_letter(5 + prd + len(periods))})'
+                    ws.Cells(StartRow + i, 5 + prd + len(periods) + 1).Formula = f'=IF({get_column_letter(5 + prd + len(periods))}{StartRow + i}="",SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row-4}:${CRM_row-4},${Sales_metres_row}:${Sales_metres_row},${CRM_row-5}:${CRM_row-5},"ДКП"),' \
+                                                      f'SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row-4}:${CRM_row-4},${Sales_metres_row}:${Sales_metres_row},${CRM_row-5}:${CRM_row-5},"ДКП")+{get_column_letter(5 + prd + len(periods))}:{get_column_letter(5 + prd + len(periods))})'
                 elif k == 'Корректировка кв.м.':
                     ws.Cells(StartRow + i,
-                             5 + prd).Formula = f'=SUMIFS({CRM_name}!$BB:$BB,{CRM_name}!$AM:$AM,@${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AR:$AR,@$C:$C,{CRM_name}!$AS:$AS,@$D:$D,{CRM_name}!$AQ:$AQ,"ДДУ")'
+                             5 + prd).Formula = f'=SUMIFS({CRM_name}!$BB:$BB,{CRM_name}!$AM:$AM,${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,{CRM_name}!$AQ:$AQ,"ДДУ")'
 
                     ws.Cells(StartRow + i,
-                             5 + prd + len(periods) + 1).Formula = f'=SUMIFS({CRM_name}!$BB:$BB,{CRM_name}!$AM:$AM,@${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AR:$AR,@$C:$C,{CRM_name}!$AS:$AS,@$D:$D,{CRM_name}!$AQ:$AQ,"ДКП")'
+                             5 + prd + len(periods) + 1).Formula = f'=SUMIFS({CRM_name}!$BB:$BB,{CRM_name}!$AM:$AM,${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,{CRM_name}!$AQ:$AQ,"ДКП")'
                 elif k == 'Продажи кв.м. (накопительный итог) с учетом ВГО и дополнительных корректировок':
-                    ws.Cells(StartRow+i, 5 + prd).Value = f'=IF({get_column_letter(5 + prd - 1)}${StartRow-4}="Дом", SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row-4}:${CRM_row-4},@${Sales_metres_row}:${Sales_metres_row},${CRM_row-5}:${CRM_row-5},"ДДУ")+@{Sales_corrective_row + i}:{Sales_corrective_row + i},' \
-                                                    f'SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row-4}:${CRM_row-4},@${Sales_metres_row}:${Sales_metres_row},${CRM_row-5}:${CRM_row-5},"ДДУ")+@{Sales_corrective_row + i}:{Sales_corrective_row + i}+@{get_column_letter(5 + prd - 1)}:{get_column_letter(5 + prd -1)})'
+                    ws.Cells(StartRow+i, 5 + prd).Value = f'=IF({get_column_letter(5 + prd - 1)}${StartRow-4}="Дом", SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row-4}:${CRM_row-4},${Sales_metres_row}:${Sales_metres_row},${CRM_row-5}:${CRM_row-5},"ДДУ")+{Sales_corrective_row + i}:{Sales_corrective_row + i},' \
+                                                    f'SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row-4}:${CRM_row-4},${Sales_metres_row}:${Sales_metres_row},${CRM_row-5}:${CRM_row-5},"ДДУ")+{Sales_corrective_row + i}:{Sales_corrective_row + i}+{get_column_letter(5 + prd - 1)}:{get_column_letter(5 + prd -1)})'
 
-                    ws.Cells(StartRow+i, 5 + prd + len(periods) + 1).Formula = f'=IF({get_column_letter(5 + prd + len(periods))}{StartRow + i}="", SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row-4}:${CRM_row-4},@${Sales_metres_row}:${Sales_metres_row},${CRM_row-5}:${CRM_row-5},"ДКП")+@{Sales_corrective_row + i}:{Sales_corrective_row + i},' \
-                                                    f'SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row-4}:${CRM_row-4},@${Sales_metres_row}:${Sales_metres_row},${CRM_row-5}:${CRM_row-5},"ДКП")+@{Sales_corrective_row + i}:{Sales_corrective_row + i}+@{get_column_letter(5 + prd + len(periods))}:{get_column_letter(5 + prd + len(periods))})'
+                    ws.Cells(StartRow+i, 5 + prd + len(periods) + 1).Formula = f'=IF({get_column_letter(5 + prd + len(periods))}{StartRow + i}="", SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row-4}:${CRM_row-4},${Sales_metres_row}:${Sales_metres_row},${CRM_row-5}:${CRM_row-5},"ДКП")+{Sales_corrective_row + i}:{Sales_corrective_row + i},' \
+                                                    f'SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row-4}:${CRM_row-4},${Sales_metres_row}:${Sales_metres_row},${CRM_row-5}:${CRM_row-5},"ДКП")+{Sales_corrective_row + i}:{Sales_corrective_row + i}+{get_column_letter(5 + prd + len(periods))}:{get_column_letter(5 + prd + len(periods))})'
                 elif k == 'Продажи тыс. руб. (накопительный итог) без учета ВГО и дополнительных корректировок':
-                    ws.Cells(StartRow + i, 5 + prd).Formula = f'=IF({get_column_letter(5 + prd - 1)}${StartRow-4}="Дом", SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row-4}:${CRM_row-4},@${Sales_metres_row}:${Sales_metres_row},${CRM_row-5}:${CRM_row-5},"Реализация_ДДУ"),' \
-                                                      f'SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row-4}:${CRM_row-4},@${Sales_metres_row}:${Sales_metres_row},${CRM_row-5}:${CRM_row-5},"Реализация_ДДУ")+@{get_column_letter(5 + prd - 1)}:{get_column_letter(5 + prd - 1)})'
+                    ws.Cells(StartRow + i, 5 + prd).Formula = f'=IF({get_column_letter(5 + prd - 1)}${StartRow-4}="Дом", SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row-4}:${CRM_row-4},${Sales_metres_row}:${Sales_metres_row},${CRM_row-5}:${CRM_row-5},"Реализация_ДДУ"),' \
+                                                      f'SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row-4}:${CRM_row-4},${Sales_metres_row}:${Sales_metres_row},${CRM_row-5}:${CRM_row-5},"Реализация_ДДУ")+{get_column_letter(5 + prd - 1)}:{get_column_letter(5 + prd - 1)})'
 
-                    ws.Cells(StartRow + i, 5 + prd + len(periods) + 1).Formula = f'=IF({get_column_letter(5 + prd + len(periods))}{StartRow + i}="", SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row-4}:${CRM_row-4},@${Sales_metres_row}:${Sales_metres_row},${CRM_row-5}:${CRM_row-5},"Реализация_ДКП"),' \
-                                                      f'SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row-4}:${CRM_row-4},@${Sales_metres_row}:${Sales_metres_row},${CRM_row-5}:${CRM_row-5},"Реализация_ДКП")+@{get_column_letter(5 + prd + len(periods))}:{get_column_letter(5 + prd + len(periods))})'
+                    ws.Cells(StartRow + i, 5 + prd + len(periods) + 1).Formula = f'=IF({get_column_letter(5 + prd + len(periods))}{StartRow + i}="", SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row-4}:${CRM_row-4},${Sales_metres_row}:${Sales_metres_row},${CRM_row-5}:${CRM_row-5},"Реализация_ДКП"),' \
+                                                      f'SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row-4}:${CRM_row-4},${Sales_metres_row}:${Sales_metres_row},${CRM_row-5}:${CRM_row-5},"Реализация_ДКП")+{get_column_letter(5 + prd + len(periods))}:{get_column_letter(5 + prd + len(periods))})'
                 elif k == 'Корректировка тыс.руб.':
-                    ws.Cells(StartRow + i, 5 + prd).Formula = f'=SUMIFS({CRM_name}!$BC:$BC,{CRM_name}!$AM:$AM,@${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AR:$AR,@$C:$C,{CRM_name}!$AS:$AS,@$D:$D,{CRM_name}!$AQ:$AQ,"ДДУ")'
+                    ws.Cells(StartRow + i, 5 + prd).Formula = f'=SUMIFS({CRM_name}!$BC:$BC,{CRM_name}!$AM:$AM,${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,{CRM_name}!$AQ:$AQ,"ДДУ")'
                     ws.Cells(StartRow + i,
-                             5 + prd + len(periods) + 1).Formula = f'=SUMIFS({CRM_name}!$BC:$BC,{CRM_name}!$AM:$AM,@${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AR:$AR,@$C:$C,{CRM_name}!$AS:$AS,@$D:$D,{CRM_name}!$AQ:$AQ,"ДКП")'
+                             5 + prd + len(periods) + 1).Formula = f'=SUMIFS({CRM_name}!$BC:$BC,{CRM_name}!$AM:$AM,${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,{CRM_name}!$AQ:$AQ,"ДКП")'
                 elif k == 'Продажи тыс. руб. (накопительный итог) с учетом ВГО и дополнительных корректировок':
-                    ws.Cells(StartRow + i, 5 + prd).Formula = f'=IF({get_column_letter(5 + prd - 1)}${StartRow-4}="Дом", SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row-4}:${CRM_row-4},@${Sales_metres_row}:${Sales_metres_row},${CRM_row-5}:${CRM_row-5},"Реализация_ДДУ")+@{Sales_corrective_rubles_row + i}:{Sales_corrective_rubles_row + i},' \
-                                                      f'SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row-4}:${CRM_row-4},@${Sales_metres_row}:${Sales_metres_row},${CRM_row-5}:${CRM_row-5},"Реализация_ДДУ")+@{Sales_corrective_rubles_row + i}:{Sales_corrective_rubles_row + i}+@{get_column_letter(5 + prd - 1)}:{get_column_letter(5 + prd - 1)})'
+                    ws.Cells(StartRow + i, 5 + prd).Formula = f'=IF({get_column_letter(5 + prd - 1)}${StartRow-4}="Дом", SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row-4}:${CRM_row-4},${Sales_metres_row}:${Sales_metres_row},${CRM_row-5}:${CRM_row-5},"Реализация_ДДУ")+{Sales_corrective_rubles_row + i}:{Sales_corrective_rubles_row + i},' \
+                                                      f'SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row-4}:${CRM_row-4},${Sales_metres_row}:${Sales_metres_row},${CRM_row-5}:${CRM_row-5},"Реализация_ДДУ")+{Sales_corrective_rubles_row + i}:{Sales_corrective_rubles_row + i}+{get_column_letter(5 + prd - 1)}:{get_column_letter(5 + prd - 1)})'
 
                     ws.Cells(StartRow + i,
-                             5 + prd + len(periods) + 1).Formula = f'=IF({get_column_letter(5 + prd + len(periods))}{StartRow + i}="", SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row - 4}:${CRM_row - 4},@${Sales_metres_row}:${Sales_metres_row},${CRM_row - 5}:${CRM_row - 5},"Реализация_ДКП")+@{Sales_corrective_rubles_row + i}:{Sales_corrective_rubles_row + i},' \
-                                        f'SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row - 4}:${CRM_row - 4},@${Sales_metres_row}:${Sales_metres_row},${CRM_row - 5}:${CRM_row - 5},"Реализация_ДКП")+@{Sales_corrective_rubles_row + i}:{Sales_corrective_rubles_row + i}+@{get_column_letter(5 + prd + len(periods))}:{get_column_letter(5 + prd + len(periods))})'
+                             5 + prd + len(periods) + 1).Formula = f'=IF({get_column_letter(5 + prd + len(periods))}{StartRow + i}="", SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row - 4}:${CRM_row - 4},${Sales_metres_row}:${Sales_metres_row},${CRM_row - 5}:${CRM_row - 5},"Реализация_ДКП")+{Sales_corrective_rubles_row + i}:{Sales_corrective_rubles_row + i},' \
+                                        f'SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row - 4}:${CRM_row - 4},${Sales_metres_row}:${Sales_metres_row},${CRM_row - 5}:${CRM_row - 5},"Реализация_ДКП")+{Sales_corrective_rubles_row + i}:{Sales_corrective_rubles_row + i}+{get_column_letter(5 + prd + len(periods))}:{get_column_letter(5 + prd + len(periods))})'
 
                 elif k == 'Партнерские продажи, кв. м.':
-                    ws.Cells(StartRow + i, 5 + prd).Formula = f'=IF({get_column_letter(5 + prd - 1)}${StartRow-4}="Дом", SUMIFS({CRM_name}!$AX:$AX,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,@$C:$C,{CRM_name}!$AS:$AS,@$D:$D,{CRM_name}!$AM:$AM,@${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДДУ")+' \
-                                                      f'SUMIFS({CRM_name}!$BB:$BB,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,@$C:$C,{CRM_name}!$AS:$AS,@$D:$D,{CRM_name}!$AM:$AM,@${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДДУ"),' \
-                                                      f'SUMIFS({CRM_name}!$AX:$AX,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,@$C:$C,{CRM_name}!$AS:$AS,@$D:$D,{CRM_name}!$AM:$AM,@${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДДУ")+' \
-                                                      f'SUMIFS({CRM_name}!$BB:$BB,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,@$C:$C,{CRM_name}!$AS:$AS,@$D:$D,{CRM_name}!$AM:$AM,@${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДДУ")+@{get_column_letter(5 + prd - 1)}:{get_column_letter(5 + prd - 1)})'
+                    ws.Cells(StartRow + i, 5 + prd).Formula = f'=IF({get_column_letter(5 + prd - 1)}${StartRow-4}="Дом", SUMIFS({CRM_name}!$AX:$AX,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,{CRM_name}!$AM:$AM,${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДДУ")+' \
+                                                      f'SUMIFS({CRM_name}!$BB:$BB,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,{CRM_name}!$AM:$AM,${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДДУ"),' \
+                                                      f'SUMIFS({CRM_name}!$AX:$AX,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,{CRM_name}!$AM:$AM,${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДДУ")+' \
+                                                      f'SUMIFS({CRM_name}!$BB:$BB,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,{CRM_name}!$AM:$AM,${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДДУ")+{get_column_letter(5 + prd - 1)}:{get_column_letter(5 + prd - 1)})'
 
                     ws.Cells(StartRow + i,
-                             5 + prd + len(periods) + 1).Formula = f'=IF({get_column_letter(5 + prd + len(periods))}{StartRow + i}="", SUMIFS({CRM_name}!$AX:$AX,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,@$C:$C,{CRM_name}!$AS:$AS,@$D:$D,{CRM_name}!$AM:$AM,@${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДКП")+' \
-                                        f'SUMIFS({CRM_name}!$BB:$BB,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,@$C:$C,{CRM_name}!$AS:$AS,@$D:$D,{CRM_name}!$AM:$AM,@${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДКП"),' \
-                                        f'SUMIFS({CRM_name}!$AX:$AX,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,@$C:$C,{CRM_name}!$AS:$AS,@$D:$D,{CRM_name}!$AM:$AM,@${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДКП")+' \
-                                        f'SUMIFS({CRM_name}!$BB:$BB,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,@$C:$C,{CRM_name}!$AS:$AS,@$D:$D,{CRM_name}!$AM:$AM,@${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДКП")+@{get_column_letter(5 + prd + len(periods))}:{get_column_letter(5 + prd + len(periods))})'
+                             5 + prd + len(periods) + 1).Formula = f'=IF({get_column_letter(5 + prd + len(periods))}{StartRow + i}="", SUMIFS({CRM_name}!$AX:$AX,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,{CRM_name}!$AM:$AM,${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДКП")+' \
+                                        f'SUMIFS({CRM_name}!$BB:$BB,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,{CRM_name}!$AM:$AM,${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДКП"),' \
+                                        f'SUMIFS({CRM_name}!$AX:$AX,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,{CRM_name}!$AM:$AM,${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДКП")+' \
+                                        f'SUMIFS({CRM_name}!$BB:$BB,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,{CRM_name}!$AM:$AM,${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДКП")+{get_column_letter(5 + prd + len(periods))}:{get_column_letter(5 + prd + len(periods))})'
                 elif k == 'Партнерские продажи, тыс. руб.':
-                    ws.Cells(StartRow + i, 5 + prd).Formula = f'=IF({get_column_letter(5 + prd - 1)}${StartRow-4}="Дом", SUMIFS({CRM_name}!$AY:$AY,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,@$C:$C,{CRM_name}!$AS:$AS,@$D:$D,{CRM_name}!$AM:$AM,@${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДДУ")+' \
-                                                      f'SUMIFS({CRM_name}!$BC:$BC,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,@$C:$C,{CRM_name}!$AS:$AS,@$D:$D,{CRM_name}!$AM:$AM,@${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДДУ"),' \
-                                                      f'SUMIFS({CRM_name}!$AY:$AY,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,@$C:$C,{CRM_name}!$AS:$AS,@$D:$D,{CRM_name}!$AM:$AM,@${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДДУ")+' \
-                                                      f'SUMIFS({CRM_name}!$BC:$BC,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,@$C:$C,{CRM_name}!$AS:$AS,@$D:$D,{CRM_name}!$AM:$AM,@${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДДУ")+@{get_column_letter(5 + prd - 1)}:{get_column_letter(5 + prd - 1)})'
+                    ws.Cells(StartRow + i, 5 + prd).Formula = f'=IF({get_column_letter(5 + prd - 1)}${StartRow-4}="Дом", SUMIFS({CRM_name}!$AY:$AY,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,{CRM_name}!$AM:$AM,${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДДУ")+' \
+                                                      f'SUMIFS({CRM_name}!$BC:$BC,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,{CRM_name}!$AM:$AM,${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДДУ"),' \
+                                                      f'SUMIFS({CRM_name}!$AY:$AY,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,{CRM_name}!$AM:$AM,${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДДУ")+' \
+                                                      f'SUMIFS({CRM_name}!$BC:$BC,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,{CRM_name}!$AM:$AM,${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДДУ")+{get_column_letter(5 + prd - 1)}:{get_column_letter(5 + prd - 1)})'
 
                     ws.Cells(StartRow + i,
-                             5 + prd + len(periods) + 1).Formula = f'=IF({get_column_letter(5 + prd + len(periods))}{StartRow + i}="", SUMIFS({CRM_name}!$AY:$AY,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,@$C:$C,{CRM_name}!$AS:$AS,@$D:$D,{CRM_name}!$AM:$AM,@${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДКП")+' \
-                                        f'SUMIFS({CRM_name}!$BC:$BC,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,@$C:$C,{CRM_name}!$AS:$AS,@$D:$D,{CRM_name}!$AM:$AM,@${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДКП"),' \
-                                        f'SUMIFS({CRM_name}!$AY:$AY,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,@$C:$C,{CRM_name}!$AS:$AS,@$D:$D,{CRM_name}!$AM:$AM,@${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДКП")+' \
-                                        f'SUMIFS({CRM_name}!$BC:$BC,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,@$C:$C,{CRM_name}!$AS:$AS,@$D:$D,{CRM_name}!$AM:$AM,@${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДКП")+@{get_column_letter(5 + prd + len(periods))}:{get_column_letter(5 + prd + len(periods))})'
+                             5 + prd + len(periods) + 1).Formula = f'=IF({get_column_letter(5 + prd + len(periods))}{StartRow + i}="", SUMIFS({CRM_name}!$AY:$AY,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,{CRM_name}!$AM:$AM,${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДКП")+' \
+                                        f'SUMIFS({CRM_name}!$BC:$BC,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,{CRM_name}!$AM:$AM,${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДКП"),' \
+                                        f'SUMIFS({CRM_name}!$AY:$AY,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,{CRM_name}!$AM:$AM,${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДКП")+' \
+                                        f'SUMIFS({CRM_name}!$BC:$BC,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,{CRM_name}!$AM:$AM,${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДКП")+{get_column_letter(5 + prd + len(periods))}:{get_column_letter(5 + prd + len(periods))})'
             StartRow -= 6
         StartRow+=6
         ws.Cells(StartRow + len(df) + 1, 2).Value = 'ИТОГО'
