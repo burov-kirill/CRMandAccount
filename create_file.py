@@ -816,8 +816,3 @@ def set_border(ws, rng, init_row, init_col, last_row, last_col, color = '', opti
         ws.Range((ws.Cells(last_row, init_col)), (ws.Cells(last_row, last_col))).Borders(8).Weight = 3
         ws.Range(ws.Cells(init_row, init_col+1), ws.Cells(last_row, init_col+3)).Borders(10).Weight = 2
 
-
-
-
-
-# open_and_fill_new_file(create_excel_file(r'C:\Users\cyril\Desktop\ОСТ', 'name.xlsb'))

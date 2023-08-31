@@ -261,13 +261,3 @@ class AccountSales(AccountFile):
         add_df['Тип'] = 'Заключение'
         return add_df
 
-# (self.df['2_Документ'].str.lower().str.contains("реализация")) | (self.df['2_Документ'].str.lower().str.contains("корректировка реализации")))
-
-# #
-# cl = AccountPayment(r'C:\Users\k.burov\Desktop\Сверка CRM\Данные 6м2023\Верейская\Карточка счета 76.33 за 1 полугодие 2023 г. АО  СЗ  САМОЛЕТ-ВЕРЕЙСКАЯ.xlsx', 'iueiruei', 'ddd', False, '')
-# print(cl.df)
-# #
-# ot = AccountSales(
-#         r'C:\Users\k.burov\Desktop\Сверка CRM\Данные 6м2023\Алхимово\Карточка счета 90.01.1 за 1 полугодие 2023 г. ООО  СПЕЦИАЛИЗИРОВАННЫЙ ЗАСТРОЙЩИК  САМОЛЕТ-АЛХИМОВО.xlsx',
-#         '96', 'fff', False, '')
-# print(ot.df)
