@@ -75,7 +75,7 @@ class AccountFile:
         return cutted_data
 
     def __create_raw_dataframe(self):
-        wb = openpyxl.load_workbook(self.path)
+        wb = openpyxl.load_workbook(self.path, read_only=True)
         ws = wb[wb.sheetnames[0]]
         raw_df = self.__drop_na_columns(pd.DataFrame(self.__cut_raw_data(ws)))
         raw_df.drop(raw_df.columns[-1], axis=1, inplace=True)

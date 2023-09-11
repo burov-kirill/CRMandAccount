@@ -41,7 +41,7 @@ class CrmFile:
             self.filter_frame()
 
     def load_data(self):
-        wb = openpyxl.load_workbook(self.path)
+        wb = openpyxl.load_workbook(self.path, read_only=True)
         ws = wb[wb.sheetnames[0]]
         headers = self.clear_columns(list(ws.values)[0])
         raw_data = pd.DataFrame(list(ws.values)[1:], columns=headers)
@@ -52,11 +52,13 @@ class CrmFile:
         return raw_data
 
     def filter_frame(self):
-        for i in range(len(self.df)):
-            if not (self.df['Цена_дог,руб(без дублей)'][i] != 0 and self.df['Тип договора'][i] in ('ДДУ', 'ДКП')):
-                self.additional_frame.iloc[i] = ''
-            # if not (self.df['Цена_дог,руб(без дублей)'][i] != 0):
-                self.additional_frame.iloc[i] = ''
+        idx = [i for i in range(len(self.df)) if not (self.df['Цена_дог,руб(без дублей)'][i] != 0 and self.df['Тип договора'][i] in ('ДДУ', 'ДКП'))]
+        self.additional_frame.iloc[idx] = ''
+        # for i in range(len(self.df)):
+        #     if not (self.df['Цена_дог,руб(без дублей)'][i] != 0 and self.df['Тип договора'][i] in ('ДДУ', 'ДКП')):
+        #         self.additional_frame.iloc[i] = ''
+        #     # if not (self.df['Цена_дог,руб(без дублей)'][i] != 0):
+        #     #     self.additional_frame.iloc[i] = ''
 
 
     def create_additional_frame(self):

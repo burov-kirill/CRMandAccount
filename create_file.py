@@ -8,6 +8,12 @@ import pandas as pd
 import win32com.client
 from win32com.client import constants as c
 
+from templates import SALES_METRES_WITH_FIRST_COLUMN, SALES_METRES_WITH_OTHER_COLUMN, CORRECTED_METRES, \
+    SALES_METRES_WITHOUT_FIRST_COLUMN, SALES_METRES_WITHOUT_OTHER_COLUMN, SALES_MONEY_WITH_FIRST_COLUMN, \
+    CORRECTED_SALES, SALES_MONEY_WITHOUT_FIRST_COLUMN, SALES_MONEY_WITHOUT_OTHER_COLUMN, SALES_MONEY_WITH_OTHER_COLUMN, \
+    PARTNER_SALES_METRES_FIRST_COLUMN, PARTNER_SALES_METRES_OTHER_COLUMN, PARTNER_SALES_MONEY_OTHER_COLUMN, \
+    PARTNER_SALES_MONEY_FIRST_COLUMN, FORMULA_METRES_CLOSE, FORMULA_METRES_DENIAL, FORMULA_MONEY_CLOSE, \
+    FORMULA_MONEY_DENIAL
 
 period = '1_2014'
 PRJ = 'АЛХИМОВО'
@@ -88,7 +94,7 @@ def create_bottom_dict(user_period):
 def create_excel_file(path, name):
     Excel = win32com.client.Dispatch("Excel.Application")
     Excel.DisplayAlerts = False
-    Excel.Visible = False
+    Excel.Visible = True
     try:
         wb = Excel.Workbooks.Add()
         path = os.path.abspath((path+name))
@@ -106,16 +112,16 @@ def open_and_fill_new_file(path, name, prj, df, period):
     filename = create_excel_file(path, name)
     Excel = win32com.client.Dispatch("Excel.Application")
     Excel.DisplayAlerts = False
-    Excel.Visible = False
-    if Excel.ReferenceStyle == 1:
-        Excel.ReferenceStyle = 0
+    Excel.Visible = True
     wb = Excel.Workbooks.Open(filename)
+    if Excel.ReferenceStyle != 1:
+        Excel.ReferenceStyle = 1
 
     # sheet = wb.Worksheets('Лист1')
     # sheet.Cells(2.1).Value = "win32com"
     prj = prj.replace('-', '_')
-    DDU_sheet, DKP_sheet, CRM_sheet, RES_sheet = create_sheet(wb, prj)
-    ws = wb.Worksheets(f'Словарь_{prj}')
+    DDU_sheet, DKP_sheet, CRM_sheet, RES_sheet, DICT_sheet = create_sheet(wb, prj)
+    ws = wb.Worksheets(DICT_sheet)
     ws.Range(ws.Cells(1, 1),  # Cell to start the "paste"
              ws.Cells(1 + len(ROMANIAN_NUMBERS.index) - 1,
                       1 + len(ROMANIAN_NUMBERS.columns) - 1)  # No -1 for the index
@@ -134,7 +140,7 @@ def open_and_fill_new_file(path, name, prj, df, period):
     Excel.ActiveWindow.DisplayGridlines = False
     ws.Cells.Font.Name = "Arial"
     ws.Cells.Font.Size = 10
-    fill_data(ws, df, DDU_sheet, DKP_sheet, CRM_sheet, prj, period)
+    fill_data(ws, df, DDU_sheet, DKP_sheet, CRM_sheet,DICT_sheet, prj, period)
     ws = wb.Worksheets(RES_sheet)
     ws.Activate()
     wb.Worksheets(RES_sheet).Tab.Color = rgbToInt((128, 128, 128))
@@ -153,10 +159,11 @@ def create_sheet(wb, prj):
     for name in sheetnames:
         add = wb.Sheets.Add(Before=None, After=wb.Sheets(wb.Sheets.count))
         if name == 'Словарь':
-            add.Name = name + '_' + prj.replace('-', '_')
+            add.Name = name + '_' + prj.replace('-', '_').replace(" ", "_")
         else:
-            add.Name = name + '_' + prj
-    return (f'ДДУ_{prj}', f"ДКП_{prj}", f"CRM_{prj}", f'СВОД_{prj}')
+            add.Name = name + '_' + prj.replace(" ", "_")
+    return (f'ДДУ_{prj.replace(" ", "_")}', f'ДКП_{prj.replace(" ", "_")}', f'CRM_{prj.replace(" ", "_")}', f'СВОД_{prj.replace(" ", "_")}', f'Словарь_{prj.replace("-", "_").replace(" ", "_")}')
+
 
 
 def create_columns(Excel, wb, sheet_dict):
@@ -201,7 +208,7 @@ def create_columns(Excel, wb, sheet_dict):
                 rng.Borders(border_id).LineStyle = 1
                 rng.Borders(border_id).Weight = 2
 
-def fill_data(ws,df, DDU_name, DKP_name, CRM_name, prj, period):
+def fill_data(ws,df, DDU_name, DKP_name, CRM_name, DICT_name,  prj, period):
     bottom_dict = create_bottom_dict(period)
     periods = period_dict[period]
     ws.Cells(19,2).Value = "Данные по продажам"
@@ -226,415 +233,445 @@ def fill_data(ws,df, DDU_name, DKP_name, CRM_name, prj, period):
         ws.Cells(StartRow, 2).Value = k
         decorate_cells(ws.Range(ws.Cells(StartRow, 2), ws.Cells(StartRow, 5)), rgbToInt(subhead_interior_color),
                        rgbToInt(subhead_font_color), 20, 'Arial', True)
+        index_dict = create_index_dict(k, periods)
+        try:
+            index_frame = pd.DataFrame().from_dict(index_dict, orient='columns')
+        except Exception as exp:
+            index_frame = pd.DataFrame([index_dict])
         if k == 'По данным 1С':
-            BIT_row = StartRow + 7
+            BIT_row = StartRow + len(index_frame) + 4
         elif k == 'По данным CRM':
-            CRM_row = StartRow + 6
-        for key, value in v[4].items():
-            StartRow+=1
-            ws.Cells(StartRow, 4).Value = key
-            align_cells(ws.Cells(StartRow, 4), rgbToInt((255, 255, 255)), rgbToInt((191, 191, 191)), False)
-            length = len(v[4][f'Index {len(v[4].keys())}'])
-            if (key == 'Index 1' and k == 'Разница') or (key == 'Index 2' and k == 'По данным CRM') or (key == 'Index 3' and k == 'По данным 1С'):
-                col = 0
-                for period_elem in value:
-                    for i in range(10):
-                        ws.Cells(StartRow, 5+i + col).Value = period_elem
-                        align_cells(ws.Cells(StartRow, 5 + i + col), rgbToInt((255, 255, 255)), rgbToInt((191, 191, 191)),
-                                    False)
-                    col+=10
-            # if len(value) == 1:
-            #     for i in range(10):
-            #         ws.Cells(StartRow, 5+i).Value = value[0]
-            #         align_cells(ws.Cells(StartRow, 5 + i), rgbToInt((255, 255, 255)), rgbToInt((191, 191, 191)),
-            #                     False)
-            else:
-                for col in range(length):
-                    for i in range(10):
-                        if k == 'По данным 1С' and key == 'Index 1':
-                            if i in range(5):
-                                ws.Cells(StartRow, 5 + i + col*10).Value = value[0]
-                                align_cells(ws.Cells(StartRow, 5 + i + col*10), rgbToInt((255, 255, 255)), rgbToInt((191, 191, 191)),
-                                            False)
-                            elif i in (6, 7):
-                                ws.Cells(StartRow, 5 + i + col*10).Value = value[1]
-                                align_cells(ws.Cells(StartRow, 5 + i + col*10), rgbToInt((255, 255, 255)), rgbToInt((191, 191, 191)),
-                                            False)
-                            else:
-                                continue
-                        else:
-                            if i in (0, 1):
-                                ws.Cells(StartRow, 5 + i + col*10).Value = value[0]
-                                align_cells(ws.Cells(StartRow, 5 + i + col*10), rgbToInt((255, 255, 255)), rgbToInt((191, 191, 191)),
-                                            False)
-                            elif i in (2, 3):
-                                ws.Cells(StartRow, 5 + i + col*10).Value = 'ДДУ'
-                                align_cells(ws.Cells(StartRow, 5 + i + col*10), rgbToInt((255, 255, 255)), rgbToInt((191, 191, 191)),
-                                            False)
-                            elif i in (4, 5):
-                                continue
-                            elif i in (6, 7):
-                                ws.Cells(StartRow, 5 + i + col*10).Value = value[1]
-                                align_cells(ws.Cells(StartRow, 5 + i + col*10), rgbToInt((255, 255, 255)), rgbToInt((191, 191, 191)),
-                                            False)
-                            else:
-                                ws.Cells(StartRow, 5 + i + col*10).Value = 'ДКП'
-                                align_cells(ws.Cells(StartRow, 5 + i + col*10), rgbToInt((255, 255, 255)), rgbToInt((191, 191, 191)),
-                                            False)
+            CRM_row = StartRow + len(index_frame) + 4
+        column_dict = create_column_dict(k, periods, StartRow, DICT_name)
+        #     pattern1 = ['ДДУ', 'ДДУ', 'ДДУ', 'ДДУ', 'ДДУ', '', 'ДКП', 'ДКП', '', '']
+        #     pattern2 = ['Реализация_ДДУ', 'Реализация_ДДУ', 'ДДУ', 'ДДУ', '', '', 'Реализация_ДКП', 'Реализация_ДКП',
+        #                 'ДКП', 'ДКП']
+        #     count = 0
+        #     dct = dict()
+        #     for period in periods:
+        #         pattern3 = [period] * 10
+        #         for ptrn1, ptrn2, ptrn3 in zip(pattern1, pattern2, pattern3):
+        #             if count == 0:
+        #                 dct[str(-1)] = ['Index 1', 'Index 2', 'Index 3']
+        #             dct[str(count)] = [ptrn1, ptrn2, ptrn3]
+        #             count += 1
+        #
+        #     pattern1 = []
+        #     column_dict = dict()
+        #     count = 0
+        #     pattern2 = ['Реализация по ДДУ', '', '', '', '', '', 'Реализация по ДКП', '', '', '']
+        #     pattern3 = ['Заключение', 'Расторжение', 'Поступление ДС', 'Возврат ДС', 'Прочее движение', '',
+        #                     'Заключение', 'Расторжение', '', '']
+        #     for i in range(len(periods)):
+        #         formula = f'=IF(ISERROR(SEARCH("_",{get_column_letter(5+10*i)}{StartRow + 3},1)),' \
+        #                   f'CONCATENATE({get_column_letter(5+10*i)}{StartRow + 3}," год"),' \
+        #                   f'CONCATENATE(VLOOKUP(MID({get_column_letter(5+10*i)}{StartRow + 3},' \
+        #                   f'1,SEARCH("_",{get_column_letter(5+10*i)}{StartRow + 3})-1)+0,' \
+        #                   f'{DICT_name}!$A:$B,2,0),"-е ",' \
+        #                   f'RIGHT({get_column_letter(5+10*i)}{StartRow + 3},4)," года"))'
+        #         pattern1.append(formula)
+        #         pattern1.extend(['', '', '', '', '', '', '', '', ''])
+        #
+        #         for ptrn1, ptrn2, ptrn3 in zip(pattern1, pattern2, pattern3):
+        #             column_dict[str(count)] = [ptrn1, ptrn2, ptrn3]
+        #             count += 1
+        #         pattern1 = []
+        #
+        #
+        #     for _ in periods:
+        #         for ptrn1, ptrn2, ptrn3 in zip(pattern1, pattern2, pattern3):
+        #             column_dict[str(count)] = [ptrn1, ptrn2, ptrn3]
+        #             count += 1
+        #     DDU_FORMULA = f'=SUMIFS({DDU_name}!$AB:$AB,' \
+        #                   f'{DDU_name}!$X:$X,${StartRow + 6}:${StartRow + 6},' \
+        #                   f'{DDU_name}!$U:$U,${StartRow + 3}:${StartRow + 3},' \
+        #                   f'{DDU_name}!$V:$V,$C:$C,{DDU_name}!$W:$W,$D:$D)'
+        #     DKP_FORMULA = f'=SUMIFS({DKP_name}!$AB:$AB,' \
+        #                   f'{DKP_name}!$X:$X,${StartRow + 6}:${StartRow + 6},' \
+        #                   f'{DKP_name}!$U:$U,${StartRow + 3}:${StartRow + 3},' \
+        #                   f'{DKP_name}!$V:$V,$C:$C,{DKP_name}!$W:$W,$D:$D)'
+        #     value_dict = dict()
+        #     count = 5
+        #     for _ in periods:
+        #         for i in range(10):
+        #             if i <=4:
+        #                 lst = [DDU_FORMULA]*len(df)
+        #             elif i == 5 or i in (8, 9):
+        #                 lst = [''] * len(df)
+        #             else:
+        #                 lst = [DKP_FORMULA] * len(df)
+        #             lst.extend(['', f'=SUM({get_column_letter(count)}{StartRow + 5}:{get_column_letter(count)}{StartRow + 5 + len(df) - 1})'])
+        #             value_dict[str(count)] = lst
+        #             count+=1
+        #
+        # elif k == 'По данным CRM':
+        #     CRM_row = StartRow + 6
+        #     pattern1 = ['Реализация_ДДУ', 'Реализация_ДДУ', 'ДДУ', 'ДДУ', '', '', 'Реализация_ДКП', 'Реализация_ДКП',
+        #                 'ДКП', 'ДКП']
+        #     count = 0
+        #     dct = dict()
+        #     for period in periods:
+        #         pattern2 = [period] * 10
+        #         for ptrn1, ptrn2 in zip(pattern1, pattern2):
+        #             if count == 0:
+        #                 dct[str(-1)] = ['Index 1', 'Index 2']
+        #             dct[str(count)] = [ptrn1, ptrn2]
+        #             count += 1
+        #     pattern2 = ['Реализация по ДДУ', '', '', '', '', '', 'Реализация по ДКП', '','', '']
+        #     pattern3 = ['Заключение\n(тыс.руб.)', 'Расторжение\n(тыс.руб.)', 'Заключение\n(кв.м.)', 'Расторжение\n(кв.м.)', '',
+        #                 '', 'Заключение\n(тыс.руб.)', 'Расторжение\n(тыс.руб.)', 'Заключение\n(кв.м.)', 'Расторжение\n(кв.м.)']
+        #     column_dict = dict()
+        #     for i in range(len(periods)):
+        #         pattern1 = []
+        #         formula = f'=IF(ISERROR(SEARCH("_",{get_column_letter(5+10*i)}{StartRow + 2},1)),' \
+        #                   f'CONCATENATE({get_column_letter(5+10*i)}{StartRow + 2}," год"),' \
+        #                   f'CONCATENATE(VLOOKUP(MID({get_column_letter(5+10*i)}{StartRow + 2},' \
+        #                   f'1,SEARCH("_",{get_column_letter(5+10*i)}{StartRow + 2})-1)+0,' \
+        #                   f'{DICT_name}!$A:$B,2,0),"-е ",' \
+        #                   f'RIGHT({get_column_letter(5+10*i)}{StartRow + 2},4)," года"))'
+        #         pattern1.append(formula)
+        #         pattern1.extend(['', '', '', '', '', '', '', '', ''])
+        #         for ptrn1, ptrn2, ptrn3 in zip(pattern1, pattern2, pattern3):
+        #             column_dict[str(count)] = [ptrn1, ptrn2, ptrn3]
+        #             count += 1
+        #
+        #     DDU_FORMULA_METRES_CLOSE = FORMULA_METRES_CLOSE.substitute(CRM_NAME = CRM_name, SALES_PERIOD = StartRow + 2, DOC_TYPE = 'ДДУ')
+        #     DKP_FORMULA_METRES_CLOSE = FORMULA_METRES_CLOSE.substitute(CRM_NAME=CRM_name, SALES_PERIOD=StartRow + 2,DOC_TYPE='ДКП')
+        #     DDU_FORMULA_METRES_DENIAL = FORMULA_METRES_DENIAL.substitute(CRM_NAME = CRM_name, SALES_PERIOD = StartRow + 2, DOC_TYPE = 'ДДУ')
+        #     DKP_FORMULA_METRES_DENIAL = FORMULA_METRES_DENIAL.substitute(CRM_NAME=CRM_name, SALES_PERIOD=StartRow + 2,DOC_TYPE='ДКП')
+        #     DDU_FORMULA_MONEY_CLOSE = FORMULA_MONEY_CLOSE.substitute(CRM_NAME=CRM_name, SALES_PERIOD=StartRow + 2,DOC_TYPE='ДДУ')
+        #     DKP_FORMULA_MONEY_CLOSE = FORMULA_MONEY_CLOSE.substitute(CRM_NAME=CRM_name, SALES_PERIOD=StartRow + 2, DOC_TYPE='ДКП')
+        #     DDU_FORMULA_MONEY_DENIAL = FORMULA_MONEY_DENIAL.substitute(CRM_NAME=CRM_name, SALES_PERIOD=StartRow + 2,DOC_TYPE='ДДУ')
+        #     DKP_FORMULA_MONEY_DENIAL = FORMULA_MONEY_DENIAL.substitute(CRM_NAME=CRM_name, SALES_PERIOD=StartRow + 2,
+        #                                                                DOC_TYPE='ДКП')
+        #
+        #     FORMULS = [DDU_FORMULA_METRES_CLOSE, DDU_FORMULA_METRES_DENIAL,DDU_FORMULA_MONEY_CLOSE, DDU_FORMULA_MONEY_DENIAL, '', '',
+        #                DKP_FORMULA_METRES_CLOSE, DKP_FORMULA_METRES_DENIAL,DKP_FORMULA_MONEY_CLOSE, DKP_FORMULA_MONEY_DENIAL ]
+        #     value_dict = dict()
+        #     count = 5
+        #     for _ in periods:
+        #         for i, formula in enumerate(FORMULS):
+        #             lst = [formula] * len(df)
+        #             lst.extend(['', f'=SUM({get_column_letter(count)}{StartRow + 5}:{get_column_letter(count)}{StartRow + 5 + len(df) - 1})'])
+        #             value_dict[str(count)] = lst
+        #             count+=1
+        #
+        #
+        # else:
+        #     count = 0
+        #     dct = dict()
+        #     for period in periods:
+        #         pattern1 = [period] * 10
+        #         for ptrn1 in pattern1:
+        #             if count == 0:
+        #                 dct[str(-1)] = 'Index 1'
+        #             dct[str(count)] = ptrn1
+        #             count += 1
+        #
+        #     pattern2 = ['Разница', '', '', '', '', '', '', 'Разница по ДКП', '','']
+        #     pattern3 = ['Заключение', 'Расторжение', '', '', '', '',
+        #                 'Заключение', 'Расторжение','', '',]
+        #     column_dict = dict()
+        #     for i in range(len(periods)):
+        #         pattern1 = []
+        #         formula = f'=IF(ISERROR(SEARCH("_",{get_column_letter(5+10*i)}{StartRow + 1},1)),' \
+        #                   f'CONCATENATE({get_column_letter(5+10*i)}{StartRow + 1}," год"),' \
+        #                   f'CONCATENATE(VLOOKUP(MID({get_column_letter(5+10*i)}{StartRow + 1},' \
+        #                   f'1,SEARCH("_",{get_column_letter(5+10*i)}{StartRow + 1})-1)+0,' \
+        #                   f'{DICT_name}!$A:$B,2,0),"-е ",' \
+        #                   f'RIGHT({get_column_letter(5+10*i)}{StartRow + 1},4)," года"))'
+        #         pattern1.append(formula)
+        #         pattern1.extend(['', '', '', '', '', '', '', '', ''])
+        #         for ptrn1, ptrn2, ptrn3 in zip(pattern1, pattern2, pattern3):
+        #             column_dict[str(count)] = [ptrn1, ptrn2, ptrn3]
+        #             count += 1
+        #     # for _ in periods:
+        #     #     for ptrn1, ptrn2, ptrn3 in zip(pattern1, pattern2, pattern3):
+        #     #         column_dict[str(count)] = [ptrn1, ptrn2, ptrn3]
+        #     #         count += 1
+        #     value_dict = dict()
+        #     count = 5
+        #     for _ in periods:
+        #         for i in range(10):
+        #             if i in(0, 1, 6, 7):
+        #                 lst =  [f'={BIT_row + k}:{BIT_row + k}-{CRM_row + k}:{CRM_row + k}' for k in range(len(df))]
+        #                 # value_dict[str(count)] = [f'{BIT_row}:{BIT_row}-{CRM_row}:{CRM_row}'] * 10
+        #             else:
+        #                 lst = [''] *  len(df)
+        #                 # value_dict[str(count)] = [''] * 10
+        #             lst.extend(['',
+        #                         f'=SUM({get_column_letter(count)}{StartRow + 5}:{get_column_letter(count)}{StartRow + 5 + len(df) - 1})'])
+        #             value_dict[str(count)] = lst
+        #             count+=1
 
         StartRow += 1
+        ws.Range(ws.Cells(StartRow, 4),  # Cell to start the "paste"
+                 ws.Cells(StartRow + len(index_frame.index) - 1,
+                          4 + len(index_frame.columns) - 1)  # No -1 for the index
+                 ).Value = index_frame.values
+        align_cells(ws.Range(ws.Cells(StartRow, 4), ws.Cells(StartRow + len(index_frame.index) - 1, 4 + len(index_frame.columns) - 1)),
+                    rgbToInt((255, 255, 255)), rgbToInt((191, 191, 191)),
+                    False)
+        # добавить кол-во отступов
+        StartRow += len(index_frame)
+        for i, subhead in enumerate(['Компания', 'Очередь', 'Дом'], 2):
+            ws.Cells(StartRow, i).Value = subhead
+            MergeRange = ws.Range(ws.Cells(StartRow, i), ws.Cells(StartRow + 2, i))
+            align_cells(MergeRange, v[0], v[1])
 
-        # цикл на индексы
-        for i, subhead in enumerate(['Компания', 'Очередь', 'Дом', v[2]], 2):
-            if i == 5:
-                count = 0
-                for p, prd in enumerate(v[2], i):
-                    formula = '=ЕСЛИ(ЕОШИБКА(ПОИСК("_";IA227;1));СЦЕП(IA227;" год");СЦЕП(ВПР(ПСТР(IA227;1;ПОИСК("_";IA227;1)-1)+0;Тех_Список!A:B;2;0);"-е ";ПРАВСИМВ(IA227;4);" года"))'
-                    ws.Cells(StartRow, p+count*10-int(bool(count))*count).Value = f'=IF(ISERROR(SEARCH("_",{get_column_letter(p+count*10-int(bool(count))*count)}{StartRow - 1},1)),' \
-                                                  f'CONCATENATE({get_column_letter(p+count*10-int(bool(count))*count)}{StartRow - 1}," год"),CONCATENATE(VLOOKUP(MID({get_column_letter(p+count*10-int(bool(count))*count)}{StartRow - 1},' \
-                                                  f'1,SEARCH("_",{get_column_letter(p+count*10-int(bool(count))*count)}{StartRow - 1})-1)+0,Словарь_{prj.replace("-","_")}!$A:$B,2,0),"-е ",' \
-                                                  f'RIGHT({get_column_letter(p+count*10-int(bool(count))*count)}{StartRow - 1},4)," года"))'
-                    # ws.Cells(StartRow,
-                    #          i).Value = f'=CONCAT(IF(LEFT({get_column_letter(i)}{StartRow - 1},1)="1","I-е ","II-е "),RIGHT({get_column_letter(i)}{StartRow - 1},4)," года")'
-                    # ws.Cells(StartRow,
-                    #          i).Value = f'=CONCAT(IF(LEFT({get_column_letter(i)}{StartRow - 1},1)="1","I-е ","II-е "),RIGHT({get_column_letter(i)}{StartRow - 1},4)," года")'
-                    if k !='Разница':
-                        align_cells(ws.Range(ws.Cells(StartRow, p+count*10-int(bool(count))*count), ws.Cells(StartRow, p+count*10-int(bool(count))*count+9)), v[0], v[1])
-                    else:
-                        align_cells(ws.Range(ws.Cells(StartRow, p+count*10-int(bool(count))*count), ws.Cells(StartRow, p + 1 + count*10-int(bool(count))*count)), v[0], v[1])
-                        ws.Cells(StartRow,
-                                 p +count*10 + 6-int(bool(count))*count).Value = f'=IF(ISERROR(SEARCH("_",{get_column_letter(p+6+count*10-int(bool(count))*count)}{StartRow - 1},1)),' \
-                                            f'CONCATENATE({get_column_letter(p+6+count*10-int(bool(count))*count)}{StartRow - 1}," год"),CONCATENATE(VLOOKUP(MID({get_column_letter(p+6+count*10-int(bool(count))*count)}{StartRow - 1},' \
-                                            f'1,SEARCH("_",{get_column_letter(p+6+count*10-int(bool(count))*count)}{StartRow - 1})-1)+0,Словарь_{prj.replace("-","_")}!$A:$B,2,0),"-е ",RIGHT({get_column_letter(p+6+count*10-int(bool(count))*count)}{StartRow - 1},4)," года"))'
-                        # ws.Cells(StartRow,
-                        #          i + 6).Value = f'=CONCAT(IF(LEFT({get_column_letter(i+6)}{StartRow - 1},1)="1","I-е ","II-е "),RIGHT({get_column_letter(i+6)}{StartRow - 1},4)," года")'
-                        align_cells(ws.Range(ws.Cells(StartRow, p +count*10 + 6-int(bool(count))*count), ws.Cells(StartRow, p +count*10 + 7-int(bool(count))*count)), v[0], v[1])
-                    # align_cells(ws.Cells(StartRow, i), v[0], v[1])
-                    col = p + count*10-int(bool(count)*count)
-                    for key, value in v[3].items():
-                        ws.Cells(StartRow + 1, col).Value = key
-                        if k != 'Разница':
-                            align_cells(ws.Range(ws.Cells(StartRow+1, col),ws.Cells(StartRow+1, col + select_count_col(key))), v[0], v[1])
-                        else:
-                            align_cells(
-                                ws.Range(ws.Cells(StartRow + 1, col), ws.Cells(StartRow + 1, col + 1)),
-                                v[0], v[1])
-                        for j, head in enumerate(value, col):
-                            ws.Cells(StartRow + 2, j).Value = head
-                            align_cells(ws.Cells(StartRow + 2, j), v[0], v[1])
-                            for row in range(len(df)):
-                                ws.Cells(StartRow + 3 + row, j).NumberFormat = '# ###;(# ###);"-"'
-                                if k == 'По данным 1С':
-                                    if 'ДДУ' in key:
-                                        ws.Cells(StartRow + 3 + row, j).Formula = f'=SUMIFS({DDU_name}!$AB:$AB,' \
-                                                                                f'{DDU_name}!$X:$X,${StartRow + 2}:${StartRow + 2},' \
-                                                                                f'{DDU_name}!$U:$U,${StartRow-1}:${StartRow-1},' \
-                                                                                f'{DDU_name}!$V:$V,$C:$C,{DDU_name}!$W:$W,$D:$D)'
-                                    else:
-                                        ws.Cells(StartRow + 3 + row, j).Formula = f'=SUMIFS({DKP_name}!$AB:$AB,' \
-                                                                                f'{DKP_name}!$X:$X,${StartRow + 2}:${StartRow + 2},' \
-                                                                                f'{DKP_name}!$U:$U,${StartRow-1}:${StartRow-1},' \
-                                                                                f'{DKP_name}!$V:$V,$C:$C,{DKP_name}!$W:$W,$D:$D)'
-                                elif k == 'По данным CRM':
-                                    if 'ДДУ' in key:
-                                        if 'тыс.руб.' in head:
-                                            if 'Заключение' in head:
-                                                ws.Cells(StartRow + 3 + row, j).Formula = f'=SUMIFS({CRM_name}!$AY:$AY,' \
-                                                                                        f'{CRM_name}!$AM:$AM,${StartRow-1}:${StartRow-1},{CRM_name}' \
-                                                                                        f'!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,' \
-                                                                                        f'{CRM_name}!$AQ:$AQ,"ДДУ")'
-                                            else:
-                                                ws.Cells(StartRow + 3 + row, j).Formula = f'=SUMIFS({CRM_name}!$AY:$AY,' \
-                                                                                        f'{CRM_name}!$AP:$AP,${StartRow - 1}:${StartRow - 1},{CRM_name}' \
-                                                                                        f'!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,' \
-                                                                                        f'{CRM_name}!$AQ:$AQ,"ДДУ")'
-                                        else:
-                                            if 'Заключение' in head:
-                                                ws.Cells(StartRow + 3 + row, j).Formula = f'=SUMIFS({CRM_name}!$AX:$AX,' \
-                                                                                        f'{CRM_name}!$AM:$AM,${StartRow - 1}:${StartRow - 1},{CRM_name}' \
-                                                                                        f'!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,' \
-                                                                                        f'{CRM_name}!$AQ:$AQ,"ДДУ")'
-                                            else:
-                                                ws.Cells(StartRow + 3 + row, j).Formula = f'=SUMIFS({CRM_name}!$AX:$AX,' \
-                                                                                        f'{CRM_name}!$AP:$AP,${StartRow - 1}:${StartRow - 1},{CRM_name}' \
-                                                                                        f'!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,' \
-                                                                                        f'{CRM_name}!$AQ:$AQ,"ДДУ")'
-                                    else:
-                                        if 'тыс.руб.' in head:
-                                            if 'Заключение' in head:
-                                                ws.Cells(StartRow + 3 + row, j).Formula = f'=SUMIFS({CRM_name}!$AY:$AY,' \
-                                                                                        f'{CRM_name}!$AM:$AM,${StartRow-1}:${StartRow-1},{CRM_name}' \
-                                                                                        f'!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,' \
-                                                                                        f'{CRM_name}!$AQ:$AQ,"ДКП")'
-                                            else:
-                                                ws.Cells(StartRow + 3 + row, j).Formula = f'=SUMIFS({CRM_name}!$AY:$AY,' \
-                                                                                        f'{CRM_name}!$AP:$AP,${StartRow - 1}:${StartRow - 1},{CRM_name}' \
-                                                                                        f'!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,' \
-                                                                                        f'{CRM_name}!$AQ:$AQ,"ДКП")'
-                                        else:
-                                            if 'Заключение' in head:
-                                                ws.Cells(StartRow + 3 + row, j).Formula = f'=SUMIFS({CRM_name}!$AX:$AX,' \
-                                                                                        f'{CRM_name}!$AM:$AM,${StartRow - 1}:${StartRow - 1},{CRM_name}' \
-                                                                                        f'!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,' \
-                                                                                        f'{CRM_name}!$AQ:$AQ,"ДКП")'
-                                            else:
-                                                ws.Cells(StartRow + 3 + row, j).Formula = f'=SUMIFS({CRM_name}!$AX:$AX,' \
-                                                                                        f'{CRM_name}!$AP:$AP,${StartRow - 1}:${StartRow - 1},{CRM_name}' \
-                                                                                        f'!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,' \
-                                                                                        f'{CRM_name}!$AQ:$AQ,"ДКП")'
-
-                                else:
-                                    # ws.Cells(StartRow + 3 + row, j).Value = f'=@134:134-@147:147'
-                                    ws.Cells(StartRow + 3 + row, j).Value = f'={BIT_row+row}:{BIT_row+row}-{CRM_row+row}:{CRM_row+row}'
-
-                            ws.Cells(StartRow + 3 + len(df), j).Value = ''  # format
-                            ws.Cells(StartRow + 3 + len(df) + 1,
-                                     j).Value = f'=SUM({get_column_letter(j)}{StartRow+3}:{get_column_letter(j)}{StartRow + 3 + len(df)})'
-                            ws.Cells(StartRow + 3 + len(df) + 1,
-                                     j).Font.Bold = True
-
-                        if head == 'Прочее \nдвижение':
-                            col = j + 2
-                        elif head == 'Расторжение \n(кв.м.)':
-                            col = j + 3
-                        elif head == 'Расторжение' and key == 'Разница':
-                            col = j + 5
-
-                    count+=1
-            else:
-                ws.Cells(StartRow, i).Value = subhead
-                MergeRange = ws.Range(ws.Cells(StartRow, i), ws.Cells(StartRow + 2, i))
-                align_cells(MergeRange, v[0], v[1])
-
-
+        column_frame = pd.DataFrame().from_dict(column_dict, orient='columns')
+        # StartRow += 1
+        column_rng = ws.Range(ws.Cells(StartRow, 5),  # Cell to start the "paste"
+                 ws.Cells(StartRow + len(column_frame.index) - 1,
+                          5 + len(column_frame.columns) - 1))
+        column_rng.Value = column_frame.values
+        decorate_cells(column_rng, v[0], v[1], 10, 'Arial', True)
         StartRow+=3
+        first_row  = {'Проект': 'Если необходимо вставить дополнительные очереди/дома, то добавьте строку перед текущей', 'Очередь': '', 'Дом': ''}
+        second_row = {'Проект': 'ИТОГО', 'Очередь': '', 'Дом': ''}
+        new_df = pd.concat([df, pd.DataFrame(first_row, index=[0]), pd.DataFrame(second_row, index=[0])])
         ws.Range(ws.Cells(StartRow, 2),  # Cell to start the "paste"
-                 ws.Cells(StartRow + len(df.index) - 1,
-                          2 + len(df.columns) - 1)  # No -1 for the index
+                 ws.Cells(StartRow + len(new_df.index) - 1,
+                          2 + len(new_df.columns) - 1)  # No -1 for the index
                  ).NumberFormat = '@'
         ws.Range(ws.Cells(StartRow, 2),  # Cell to start the "paste"
-                    ws.Cells(StartRow + len(df.index) - 1,
-                                2 + len(df.columns) - 1)  # No -1 for the index
-                    ).Value = df.values
-        ws.Range(ws.Cells(StartRow, 2),  # Cell to start the "paste"
-                 ws.Cells(StartRow + len(df.index) - 1,
-                          2 + len(df.columns) - 1)  # No -1 for the index
-                 ).NumberFormat = '@'
+                    ws.Cells(StartRow + len(new_df.index) - 1,
+                                2 + len(new_df.columns) - 1)  # No -1 for the index
+                    ).Value = new_df.values
+
 
         ws.Range(ws.Cells(StartRow, 2),  # Cell to start the "paste"
-                 ws.Cells(StartRow + len(df.index) - 1,
-                          2 + len(df.columns) - 1)  # No -1 for the index
+                 ws.Cells(StartRow + len(new_df.index) - 1,
+                          2 + len(new_df.columns) - 1)  # No -1 for the index
                  ).Replace(',', '.')
-        rng = ws.Range(ws.Cells(StartRow-3, 2), (ws.Cells(StartRow+len(df) + 1, 10*length+4)))
 
-        set_border(ws, rng, StartRow - 3, 2, StartRow + len(df)+1, 10*length+4, rgbToInt(v[0]), True)
-        if k == 'По данным 1С':
-            for i in range(length):
-                rng = ws.Range(ws.Cells(StartRow - 1, 10+10*i), ws.Cells(StartRow+len(df) - 1, 10+10*i))
-                right_rng = ws.Range(ws.Cells(StartRow - 1, 13+10*i), ws.Cells(StartRow + len(df) - 1, 14+10*i))
-                right_rng.Interior.Pattern = 14
-                right_rng.Interior.PatternThemeColor = 2
-                rng.Interior.Pattern = 14
-                rng.Interior.PatternThemeColor = 2
-        elif k == 'По данным CRM':
-            for i in range(length):
-                rng = ws.Range(ws.Cells(StartRow - 1, 9+10*i), ws.Cells(StartRow + len(df) - 1, 10+10*i))
-                rng.Interior.Pattern = 14
-                rng.Interior.PatternThemeColor = 2
-        else:
-            for i in range(length):
-                rng = ws.Range(ws.Cells(StartRow - 3, 7+10*i), ws.Cells(StartRow + len(df) - 1, 10+10*i))
-                right_rng = ws.Range(ws.Cells(StartRow - 3, 13+10*i), ws.Cells(StartRow + len(df) - 1, 14+10*i))
-                right_rng.Interior.Pattern = 14
-                right_rng.Interior.PatternThemeColor = 2
-                rng.Interior.Pattern = 14
-                rng.Interior.PatternThemeColor = 2
+        value_dict = create_value_dict(ws, df, k, prj, periods, StartRow, BIT_row, CRM_row, DDU_name, DKP_name, CRM_name)
+        values_frame = pd.DataFrame().from_dict(value_dict, orient='columns')
+        # StartRow += 1
+        ws.Range(ws.Cells(StartRow, 5),  # Cell to start the "paste"
+                 ws.Cells(StartRow + len(values_frame.index) - 1,
+                          5 + len(values_frame.columns) - 1)  # No -1 for the index
+                 ).Value = values_frame.values
+        # set_border(ws, rng, StartRow - 3, 2, StartRow + len(df) + 1, 10 * length + 4, rgbToInt(v[0]), True)
+        rng = ws.Range(ws.Cells(StartRow, 5), ws.Cells(StartRow + len(values_frame.index) - 1,
+                          5 + len(values_frame.columns) - 1))
+        rng.NumberFormat = '# ###;(# ###);"-"'
+        rng = ws.Range(ws.Cells(StartRow-3, 2), ws.Cells(StartRow + len(values_frame.index) - 1,
+                                                       5 + len(values_frame.columns) - 1))
+        set_border(ws, rng, StartRow - 3, 2, StartRow + len(new_df)-1, 4+10*len(periods), rgbToInt(v[0]), True)
 
-        ws.Cells(StartRow+len(df), 2).Value = 'Если необходимо вставить дополнительные очереди/дома, то добавьте строку перед текущей'
-        ws.Cells(StartRow + len(df), 2).Font.Color = rgbToInt((255, 0, 0))
-        ws.Cells(StartRow + len(df), 2).Font.Bold = True
+        if k == 'Разница':
+            pass
+        for i in range(len(periods)):
+            new_align_cells(ws.Range(ws.Cells(StartRow - 3, 5 + 10 * i),
+                     ws.Cells(StartRow - 3, 14 + 10 * i)))
 
-        ws.Cells(StartRow + len(df) + 1,
-                 2).Value = 'ИТОГО'
-        ws.Cells(StartRow + len(df) + 1,
-                 2).Font.Bold = True
+            new_align_cells(ws.Range(ws.Cells(StartRow - 2, 5 + 10 * i),
+             ws.Cells(StartRow - 2, 10 + 10 * i)))
 
+            new_align_cells(ws.Range(ws.Cells(StartRow - 2, 11 + 10 * i),
+             ws.Cells(StartRow - 2, 14 + 10 * i)))
 
-        StartRow+=len(df) + 3
+            if k == 'По данным CRM':
+                rng = ws.Range(ws.Cells(StartRow-1, 9 + 10*i),  # Cell to start the "paste"
+                     ws.Cells(StartRow + len(values_frame.index) - 3,10 + 10*i))
+                fill_pattern(rng)
+            elif k == 'По данным 1С':
+                rng = ws.Range(ws.Cells(StartRow-1, 10 + 10*i),  # Cell to start the "paste"
+                     ws.Cells(StartRow + len(values_frame.index) - 3,10 + 10*i))
+                fill_pattern(rng)
+                rng = ws.Range(ws.Cells(StartRow-1, 13 + 10*i),  # Cell to start the "paste"
+                     ws.Cells(StartRow + len(values_frame.index) - 3,14 + 10*i))
+                fill_pattern(rng)
+            else:
+                rng = ws.Range(ws.Cells(StartRow - 1, 7 + 10 * i),  # Cell to start the "paste"
+                               ws.Cells(StartRow + len(values_frame.index) - 3, 10 + 10 * i))
+                fill_pattern(rng)
+                rng = ws.Range(ws.Cells(StartRow - 1, 13 + 10 * i),  # Cell to start the "paste"
+                               ws.Cells(StartRow + len(values_frame.index) - 3, 14 + 10 * i))
+                fill_pattern(rng)
+
+        StartRow+=len(df) + 4
 
     StartRow = 21
     for k, v in d.items():
-
         ws.Cells(StartRow, 2).Value = k
         decorate_cells(ws.Range(ws.Cells(StartRow, 2), ws.Cells(StartRow, 4 + len(periods))), rgbToInt(v[0]), rgbToInt(v[1]), 20,
                            'Arial', True)
         decorate_cells(ws.Range(ws.Cells(StartRow, 4 + len(periods) + 2), ws.Cells(StartRow, 4 + len(periods)*2 + 1)), rgbToInt(v[0]), rgbToInt(v[1]), 20,
                        'Arial', True)
         StartRow += 1
-        for prd, period in enumerate(periods):
-            if k in ('Продажи кв.м. (накопительный итог) без учета ВГО и дополнительных корректировок',
-                         'Продажи тыс. руб. (накопительный итог) без учета ВГО и дополнительных корректировок'):
-                if k == 'Продажи кв.м. (накопительный итог) без учета ВГО и дополнительных корректировок':
-                    Sales_metres_row = StartRow + 1
+        period_df = pd.DataFrame([{str(i): period for i, period in enumerate(periods)}])
+        if k  == 'Продажи кв.м. (накопительный итог) без учета ВГО и дополнительных корректировок':
+            CORRECTED_METRES_ROW, CORRECTED_MONEY_ROW = 1, 1
+            Sales_metres_row = StartRow + 1
+            ws.Range(ws.Cells(StartRow + 1, 5), ws.Cells(StartRow + 1, 5 + len(period_df.columns) - 1)).Value = period_df.values
+            ws.Range(ws.Cells(StartRow + 1, 6 + len(periods)),ws.Cells(StartRow + 1, 6 + len(periods) + len(period_df.columns) - 1)).Value = period_df.values
+            align_cells(ws.Range(ws.Cells(StartRow + 1, 5), ws.Cells(StartRow + 1, 5 + len(period_df.columns) - 1)),
+                        rgbToInt((255, 255, 255)), rgbToInt((191, 191, 191)), False)
+            align_cells(ws.Range(ws.Cells(StartRow + 1, 6 + len(periods)),ws.Cells(StartRow + 1, 6 + len(periods) + len(period_df.columns) - 1)),
+                        rgbToInt((255, 255, 255)), rgbToInt((191, 191, 191)), False)
+        elif k == 'Продажи тыс. руб. (накопительный итог) без учета ВГО и дополнительных корректировок':
+            ws.Range(ws.Cells(StartRow + 1, 5), ws.Cells(StartRow + 1, 5 + len(period_df.columns) - 1)).Value = period_df.values
+            ws.Range(ws.Cells(StartRow + 1, 6 + len(periods)), ws.Cells(StartRow + 1, 6 + len(periods) + len(period_df.columns) - 1)).Value = period_df.values
+            align_cells(ws.Range(ws.Cells(StartRow + 1, 5), ws.Cells(StartRow + 1, 5 + len(period_df.columns) - 1)),
+                        rgbToInt((255, 255, 255)), rgbToInt((191, 191, 191)), False)
+            align_cells(ws.Range(ws.Cells(StartRow + 1, 6 + len(periods)),
+                                 ws.Cells(StartRow + 1, 6 + len(periods) + len(period_df.columns) - 1)),
+                        rgbToInt((255, 255, 255)), rgbToInt((191, 191, 191)), False)
+        StartRow += 2
+        for i, subhead in enumerate(['Компания', 'Очередь', 'Дом'], 2):
+            ws.Cells(StartRow, i).Value = subhead
+            MergeRange = ws.Range(ws.Cells(StartRow, i), ws.Cells(StartRow + 3, i))
+            align_cells(MergeRange, v[0], v[1])
+
+        ws.Cells(StartRow, 5).Value = v[2]
+        ws.Range(ws.Cells(StartRow, 5), ws.Cells(StartRow, 5+len(periods))).HorizontalAlignment = 7
+        decorate_cells(ws.Range(ws.Cells(StartRow, 5), ws.Cells(StartRow, 5+len(periods) - 1)), v[0], v[1], 10, 'Arial', True)
+        ws.Cells(StartRow, 6+len(periods)).Value = v[2]
+        ws.Range(ws.Cells(StartRow,  6+len(periods)), ws.Cells(StartRow,  6+2*len(periods))).HorizontalAlignment = 7
+        decorate_cells(ws.Range(ws.Cells(StartRow,  6+len(periods)), ws.Cells(StartRow,  5+2*len(periods))), v[0], v[1],10, 'Arial', True)
+
+        column_df = pd.DataFrame([{str(i):  f'=IF(ISERROR(SEARCH("_",{get_column_letter(i)}{Sales_metres_row},1)),' \
+        f'CONCATENATE({get_column_letter(i)}{Sales_metres_row}," год"),CONCATENATE(VLOOKUP(MID({get_column_letter(i)}{Sales_metres_row},' \
+        f'1,SEARCH("_",{get_column_letter(i)}{Sales_metres_row})-1)+0,{DICT_name}!$A:$B,2,0),"-е ",' \
+        f'RIGHT({get_column_letter(i)}{Sales_metres_row},4)," года"))' for i, period in enumerate(periods, 5) }])
+        ws.Range(ws.Cells(StartRow+1, 5), ws.Cells(StartRow+1, 5 + len(column_df.columns) - 1)).Value = column_df.values
+
+        column_df = pd.DataFrame([{str(i):  f'=IF(ISERROR(SEARCH("_",{get_column_letter(i)}{Sales_metres_row},1)),' \
+        f'CONCATENATE({get_column_letter(i)}{Sales_metres_row}," год"),CONCATENATE(VLOOKUP(MID({get_column_letter(i)}{Sales_metres_row},' \
+        f'1,SEARCH("_",{get_column_letter(i)}{Sales_metres_row})-1)+0,{DICT_name}!$A:$B,2,0),"-е ",' \
+        f'RIGHT({get_column_letter(i)}{Sales_metres_row},4)," года"))' for i, period in enumerate(periods, 6+len(periods)) }])
+        ws.Range(ws.Cells(StartRow+1, 6+len(periods)), ws.Cells(StartRow+1, 6+len(periods) + len(column_df.columns) - 1)).Value = column_df.values
+        StartRow += 4
+        first_row = {'Проект': '',
+                     'Очередь': '', 'Дом': ''}
+        second_row = {'Проект': 'ИТОГО', 'Очередь': '', 'Дом': ''}
+        new_df = pd.concat([df, pd.DataFrame(first_row, index=[0]), pd.DataFrame(second_row, index=[0])])
+        ws.Range(ws.Cells(StartRow, 2),  # Cell to start the "paste"
+                 ws.Cells(StartRow + len(new_df.index) - 1,
+                          2 + len(new_df.columns) - 1)  # No -1 for the index
+                 ).NumberFormat = '@'
+        ws.Range(ws.Cells(StartRow, 2),  # Cell to start the "paste"
+                 ws.Cells(StartRow + len(new_df.index) - 1,
+                          2 + len(new_df.columns) - 1)  # No -1 for the index
+                 ).Value = new_df.values
+        ws.Range(ws.Cells(StartRow, 2),  # Cell to start the "paste"
+                 ws.Cells(StartRow + len(new_df.index) - 1,
+                          2 + len(new_df.columns) - 1)  # No -1 for the index
+                 ).Replace(',', '.')
+        left_value_dict = dict()
+        right_value_dict = dict()
+        for j, period in enumerate(periods, 5):
+            align_cells(ws.Range(ws.Cells(StartRow-3, j), ws.Cells(StartRow-1, j)), v[0], v[1])
+            align_cells(ws.Range(ws.Cells(StartRow - 3, len(periods) + j + 1), ws.Cells(StartRow - 1, len(periods) + j + 1)), v[0], v[1])
+            if k == 'Продажи кв.м. (накопительный итог) без учета ВГО и дополнительных корректировок':
+                if j == 5:
+                    left_lst = [SALES_METRES_WITH_FIRST_COLUMN.substitute(CRM_ROW=CRM_row + i, CRM_PERIOD=CRM_row-4,SALES_PERIOD=Sales_metres_row,CRM_TYPE=CRM_row-5, DOC_TYPE='ДДУ')
+                            for i in range(len(df))]
+                    right_lst = [SALES_METRES_WITH_FIRST_COLUMN.substitute(CRM_ROW=CRM_row + i, CRM_PERIOD=CRM_row-4,SALES_PERIOD=Sales_metres_row,CRM_TYPE=CRM_row-5, DOC_TYPE='ДКП')
+                            for i in range(len(df))]
                 else:
-                    Sales_rubles_row = StartRow + 1
-                ws.Cells(StartRow + 1,
-                         5+prd).Value = period
-                ws.Cells(StartRow + 1,
-                         5+len(periods)+ 1 +prd).Value = period
-                # ws.Cells(StartRow + 1, 5).Value = f'=CONCAT(IF(LEFT({Sales_metres_row},1)="1","I-е ","II-е "),RIGHT({Sales_metres_row},4)," года")'
-                # ws.Cells(StartRow + 1, 7).Value = f'=CONCAT(IF(LEFT({Sales_metres_row},1)="1","I-е ","II-е "),RIGHT({Sales_metres_row},4)," года")'
-                align_cells(ws.Cells(StartRow + 1, 5+prd), rgbToInt((255, 255, 255)), rgbToInt((191, 191, 191)), False)
-                align_cells(ws.Cells(StartRow + 1, 5+len(periods)+ prd + 1), rgbToInt((255, 255, 255)), rgbToInt((191, 191, 191)), False)
-                # ws.Cells(StartRow + 1, 5).Font.Color = rgbToInt((191, 191, 191))
+                    left_lst = [SALES_METRES_WITH_OTHER_COLUMN.substitute(CRM_ROW=CRM_row + i, CRM_PERIOD=CRM_row-4,SALES_PERIOD=Sales_metres_row,CRM_TYPE=CRM_row-5, DOC_TYPE='ДДУ', PREV_COL=get_column_letter(j-1))
+                            for i in range(len(df))]
+                    right_lst = [SALES_METRES_WITH_OTHER_COLUMN.substitute(CRM_ROW=CRM_row + i, CRM_PERIOD=CRM_row-4,SALES_PERIOD=Sales_metres_row,CRM_TYPE=CRM_row-5, DOC_TYPE='ДКП', PREV_COL=get_column_letter(j+len(periods)))
+                            for i in range(len(df))]
             elif k == 'Корректировка кв.м.':
-                Sales_corrective_row = StartRow+6
-            elif k == 'Корректировка тыс.руб.':
-                Sales_corrective_rubles_row = StartRow+6
-            StartRow += 2
-
-            for i, subhead in enumerate(['Компания', 'Очередь', 'Дом', v[2]], 2):
-                if subhead == v[2]:
-                    header = v[2]
-                    # ws.Cells(StartRow, i+2).Value = subhead
-                    # align_cells(ws.Cells(StartRow, i + 2), v[0], v[1])
-                    #
-                    # align_cells(ws.Cells(StartRow, i), v[0], v[1])
-                    ws.Cells(StartRow + 1, i + prd).Value = f'=IF(ISERROR(SEARCH("_",{get_column_letter(i + prd)}{Sales_metres_row},1)),' \
-                                                  f'CONCATENATE({get_column_letter(i + prd)}{Sales_metres_row}," год"),CONCATENATE(VLOOKUP(MID({get_column_letter(i + prd)}{Sales_metres_row},' \
-                                                  f'1,SEARCH("_",{get_column_letter(i + prd)}{Sales_metres_row})-1)+0,Словарь_{prj.replace("-","_")}!$A:$B,2,0),"-е ",' \
-                                                  f'RIGHT({get_column_letter(i + prd)}{Sales_metres_row},4)," года"))'
-
-                    ws.Cells(StartRow + 1, i + len(periods) + prd + 1).Value = f'=IF(ISERROR(SEARCH("_",{get_column_letter(i + len(periods) + prd + 1)}{Sales_metres_row},1)),' \
-                                                  f'CONCATENATE({get_column_letter(i + len(periods) + prd + 1)}{Sales_metres_row}," год"),CONCATENATE(VLOOKUP(MID({get_column_letter(i + len(periods) + prd + 1)}{Sales_metres_row},' \
-                                                  f'1,SEARCH("_",{get_column_letter(i + len(periods) + prd + 1)}{Sales_metres_row})-1)+0,Словарь_{prj.replace("-","_")}!$A:$B,2,0),"-е ",' \
-                                                  f'RIGHT({get_column_letter(i + len(periods) + prd + 1)}{Sales_metres_row},4)," года"))'
-                    # ws.Cells(StartRow + 1, i).Value = f'=CONCAT(IF(LEFT({get_column_letter(i)}{Sales_metres_row},1)="1","I-е ","II-е "),RIGHT({get_column_letter(i)}{Sales_metres_row},4)," года")'
-                    # ws.Cells(StartRow + 1, i+2).Value = f'=CONCAT(IF(LEFT({get_column_letter(i+2)}{Sales_metres_row},1)="1","I-е ","II-е "),RIGHT({get_column_letter(i+2)}{Sales_metres_row},4)," года")'
-                    MergeRange = ws.Range(ws.Cells(StartRow + 1, i + prd), ws.Cells(StartRow + 3, i + prd))
-                    RightMergeRange = ws.Range(ws.Cells(StartRow + 1, i + len(periods) + prd + 1), ws.Cells(StartRow + 3, i + len(periods) + prd + 1))
-                    align_cells(RightMergeRange, v[0], v[1])
+                CORRECTED_METRES_ROW = StartRow + 1
+                left_lst = [CORRECTED_METRES.substitute(CRM_NAME=CRM_name, SALES_PERIOD=Sales_metres_row, DOC_TYPE='ДДУ')] * len(df)
+                right_lst = [CORRECTED_METRES.substitute(CRM_NAME=CRM_name, SALES_PERIOD=Sales_metres_row,
+                                                        DOC_TYPE='ДКП')] * len(df)
+            elif k == 'Продажи кв.м. (накопительный итог) с учетом ВГО и дополнительных корректировок':
+                if j == 5:
+                    left_lst = [SALES_METRES_WITHOUT_FIRST_COLUMN.substitute(CRM_ROW=CRM_row + i, CRM_PERIOD=CRM_row-4,SALES_PERIOD=Sales_metres_row,CRM_TYPE=CRM_row-5,DOC_TYPE='ДДУ',SALES_CORRECTED=CORRECTED_METRES_ROW+i)
+                                for i in range(len(df))]
+                    right_lst = [SALES_METRES_WITHOUT_FIRST_COLUMN.substitute(CRM_ROW=CRM_row + i, CRM_PERIOD=CRM_row-4,SALES_PERIOD=Sales_metres_row,CRM_TYPE=CRM_row-5,DOC_TYPE='ДКП',SALES_CORRECTED=CORRECTED_METRES_ROW+i)
+                                for i in range(len(df))]
                 else:
-                    ws.Cells(StartRow, i).Value = subhead
-                    MergeRange = ws.Range(ws.Cells(StartRow, i), ws.Cells(StartRow + 3, i))
-                align_cells(MergeRange, v[0], v[1])
+                    left_lst = [SALES_METRES_WITHOUT_OTHER_COLUMN.substitute(CRM_ROW=CRM_row + i, CRM_PERIOD=CRM_row-4,SALES_PERIOD=Sales_metres_row,CRM_TYPE=CRM_row-5,DOC_TYPE='ДДУ',SALES_CORRECTED=CORRECTED_METRES_ROW+i, PREV_COL=get_column_letter(j - 1))
+                                for i in range(len(df))]
+                    right_lst = [SALES_METRES_WITHOUT_OTHER_COLUMN.substitute(CRM_ROW=CRM_row + i, CRM_PERIOD=CRM_row-4,SALES_PERIOD=Sales_metres_row,CRM_TYPE=CRM_row-5,DOC_TYPE='ДКП',SALES_CORRECTED=CORRECTED_METRES_ROW+i,PREV_COL=get_column_letter(j+len(periods)))
+                                for i in range(len(df))]
 
-            StartRow += 4
-            ws.Range(ws.Cells(StartRow, 2),  # Cell to start the "paste"
-                     ws.Cells(StartRow + len(df.index) - 1,
-                              2 + len(df.columns) - 1)  # No -1 for the index
-                     ).NumberFormat = '@'
-            ws.Range(ws.Cells(StartRow, 2),  # Cell to start the "paste"
-                         ws.Cells(StartRow + len(df.index) - 1,
-                                  2 + len(df.columns) - 1)  # No -1 for the index
-                         ).Value = df.values
-            ws.Range(ws.Cells(StartRow, 2),  # Cell to start the "paste"
-                     ws.Cells(StartRow + len(df.index) - 1,
-                              2 + len(df.columns) - 1)  # No -1 for the index
-                     ).Replace(',', '.')
-            for i in range(len(df)):
-                ws.Cells(StartRow + i, 5 + prd).Interior.Color = rgbToInt((221, 235, 247))
-                ws.Cells(StartRow + i, 5 + prd + len(periods) + 1).Interior.Color = rgbToInt((221, 235, 247))
-                ws.Cells(StartRow + i, 5 + prd).NumberFormat = '# ###;(# ###);"-"'
-                ws.Cells(StartRow + i, 5 + prd + len(periods) + 1).NumberFormat = '# ###;(# ###);"-"'
-
-                if k == 'Продажи кв.м. (накопительный итог) без учета ВГО и дополнительных корректировок':
-                    ws.Cells(StartRow + i, 5 + prd).Formula = f'=IF({get_column_letter(5 + prd - 1)}${StartRow-4}="Дом",SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row-4}:${CRM_row-4},${Sales_metres_row}:${Sales_metres_row},${CRM_row-5}:${CRM_row-5},"ДДУ"),' \
-                                                      f'SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row-4}:${CRM_row-4},${Sales_metres_row}:${Sales_metres_row},${CRM_row-5}:${CRM_row-5},"ДДУ")+{get_column_letter(5 + prd - 1)}:{get_column_letter(5 + prd - 1)})'
-
-                    ws.Cells(StartRow + i, 5 + prd + len(periods) + 1).Formula = f'=IF({get_column_letter(5 + prd + len(periods))}{StartRow + i}="",SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row-4}:${CRM_row-4},${Sales_metres_row}:${Sales_metres_row},${CRM_row-5}:${CRM_row-5},"ДКП"),' \
-                                                      f'SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row-4}:${CRM_row-4},${Sales_metres_row}:${Sales_metres_row},${CRM_row-5}:${CRM_row-5},"ДКП")+{get_column_letter(5 + prd + len(periods))}:{get_column_letter(5 + prd + len(periods))})'
-                elif k == 'Корректировка кв.м.':
-                    ws.Cells(StartRow + i,
-                             5 + prd).Formula = f'=SUMIFS({CRM_name}!$BB:$BB,{CRM_name}!$AM:$AM,${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,{CRM_name}!$AQ:$AQ,"ДДУ")'
-
-                    ws.Cells(StartRow + i,
-                             5 + prd + len(periods) + 1).Formula = f'=SUMIFS({CRM_name}!$BB:$BB,{CRM_name}!$AM:$AM,${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,{CRM_name}!$AQ:$AQ,"ДКП")'
-                elif k == 'Продажи кв.м. (накопительный итог) с учетом ВГО и дополнительных корректировок':
-                    ws.Cells(StartRow+i, 5 + prd).Value = f'=IF({get_column_letter(5 + prd - 1)}${StartRow-4}="Дом", SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row-4}:${CRM_row-4},${Sales_metres_row}:${Sales_metres_row},${CRM_row-5}:${CRM_row-5},"ДДУ")+{Sales_corrective_row + i}:{Sales_corrective_row + i},' \
-                                                    f'SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row-4}:${CRM_row-4},${Sales_metres_row}:${Sales_metres_row},${CRM_row-5}:${CRM_row-5},"ДДУ")+{Sales_corrective_row + i}:{Sales_corrective_row + i}+{get_column_letter(5 + prd - 1)}:{get_column_letter(5 + prd -1)})'
-
-                    ws.Cells(StartRow+i, 5 + prd + len(periods) + 1).Formula = f'=IF({get_column_letter(5 + prd + len(periods))}{StartRow + i}="", SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row-4}:${CRM_row-4},${Sales_metres_row}:${Sales_metres_row},${CRM_row-5}:${CRM_row-5},"ДКП")+{Sales_corrective_row + i}:{Sales_corrective_row + i},' \
-                                                    f'SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row-4}:${CRM_row-4},${Sales_metres_row}:${Sales_metres_row},${CRM_row-5}:${CRM_row-5},"ДКП")+{Sales_corrective_row + i}:{Sales_corrective_row + i}+{get_column_letter(5 + prd + len(periods))}:{get_column_letter(5 + prd + len(periods))})'
-                elif k == 'Продажи тыс. руб. (накопительный итог) без учета ВГО и дополнительных корректировок':
-                    ws.Cells(StartRow + i, 5 + prd).Formula = f'=IF({get_column_letter(5 + prd - 1)}${StartRow-4}="Дом", SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row-4}:${CRM_row-4},${Sales_metres_row}:${Sales_metres_row},${CRM_row-5}:${CRM_row-5},"Реализация_ДДУ"),' \
-                                                      f'SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row-4}:${CRM_row-4},${Sales_metres_row}:${Sales_metres_row},${CRM_row-5}:${CRM_row-5},"Реализация_ДДУ")+{get_column_letter(5 + prd - 1)}:{get_column_letter(5 + prd - 1)})'
-
-                    ws.Cells(StartRow + i, 5 + prd + len(periods) + 1).Formula = f'=IF({get_column_letter(5 + prd + len(periods))}{StartRow + i}="", SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row-4}:${CRM_row-4},${Sales_metres_row}:${Sales_metres_row},${CRM_row-5}:${CRM_row-5},"Реализация_ДКП"),' \
-                                                      f'SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row-4}:${CRM_row-4},${Sales_metres_row}:${Sales_metres_row},${CRM_row-5}:${CRM_row-5},"Реализация_ДКП")+{get_column_letter(5 + prd + len(periods))}:{get_column_letter(5 + prd + len(periods))})'
-                elif k == 'Корректировка тыс.руб.':
-                    ws.Cells(StartRow + i, 5 + prd).Formula = f'=SUMIFS({CRM_name}!$BC:$BC,{CRM_name}!$AM:$AM,${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,{CRM_name}!$AQ:$AQ,"ДДУ")'
-                    ws.Cells(StartRow + i,
-                             5 + prd + len(periods) + 1).Formula = f'=SUMIFS({CRM_name}!$BC:$BC,{CRM_name}!$AM:$AM,${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,{CRM_name}!$AQ:$AQ,"ДКП")'
-                elif k == 'Продажи тыс. руб. (накопительный итог) с учетом ВГО и дополнительных корректировок':
-                    ws.Cells(StartRow + i, 5 + prd).Formula = f'=IF({get_column_letter(5 + prd - 1)}${StartRow-4}="Дом", SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row-4}:${CRM_row-4},${Sales_metres_row}:${Sales_metres_row},${CRM_row-5}:${CRM_row-5},"Реализация_ДДУ")+{Sales_corrective_rubles_row + i}:{Sales_corrective_rubles_row + i},' \
-                                                      f'SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row-4}:${CRM_row-4},${Sales_metres_row}:${Sales_metres_row},${CRM_row-5}:${CRM_row-5},"Реализация_ДДУ")+{Sales_corrective_rubles_row + i}:{Sales_corrective_rubles_row + i}+{get_column_letter(5 + prd - 1)}:{get_column_letter(5 + prd - 1)})'
-
-                    ws.Cells(StartRow + i,
-                             5 + prd + len(periods) + 1).Formula = f'=IF({get_column_letter(5 + prd + len(periods))}{StartRow + i}="", SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row - 4}:${CRM_row - 4},${Sales_metres_row}:${Sales_metres_row},${CRM_row - 5}:${CRM_row - 5},"Реализация_ДКП")+{Sales_corrective_rubles_row + i}:{Sales_corrective_rubles_row + i},' \
-                                        f'SUMIFS({CRM_row + i}:{CRM_row + i},${CRM_row - 4}:${CRM_row - 4},${Sales_metres_row}:${Sales_metres_row},${CRM_row - 5}:${CRM_row - 5},"Реализация_ДКП")+{Sales_corrective_rubles_row + i}:{Sales_corrective_rubles_row + i}+{get_column_letter(5 + prd + len(periods))}:{get_column_letter(5 + prd + len(periods))})'
-
-                elif k == 'Партнерские продажи, кв. м.':
-                    ws.Cells(StartRow + i, 5 + prd).Formula = f'=IF({get_column_letter(5 + prd - 1)}${StartRow-4}="Дом", SUMIFS({CRM_name}!$AX:$AX,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,{CRM_name}!$AM:$AM,${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДДУ")+' \
-                                                      f'SUMIFS({CRM_name}!$BB:$BB,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,{CRM_name}!$AM:$AM,${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДДУ"),' \
-                                                      f'SUMIFS({CRM_name}!$AX:$AX,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,{CRM_name}!$AM:$AM,${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДДУ")+' \
-                                                      f'SUMIFS({CRM_name}!$BB:$BB,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,{CRM_name}!$AM:$AM,${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДДУ")+{get_column_letter(5 + prd - 1)}:{get_column_letter(5 + prd - 1)})'
-
-                    ws.Cells(StartRow + i,
-                             5 + prd + len(periods) + 1).Formula = f'=IF({get_column_letter(5 + prd + len(periods))}{StartRow + i}="", SUMIFS({CRM_name}!$AX:$AX,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,{CRM_name}!$AM:$AM,${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДКП")+' \
-                                        f'SUMIFS({CRM_name}!$BB:$BB,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,{CRM_name}!$AM:$AM,${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДКП"),' \
-                                        f'SUMIFS({CRM_name}!$AX:$AX,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,{CRM_name}!$AM:$AM,${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДКП")+' \
-                                        f'SUMIFS({CRM_name}!$BB:$BB,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,{CRM_name}!$AM:$AM,${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДКП")+{get_column_letter(5 + prd + len(periods))}:{get_column_letter(5 + prd + len(periods))})'
-                elif k == 'Партнерские продажи, тыс. руб.':
-                    ws.Cells(StartRow + i, 5 + prd).Formula = f'=IF({get_column_letter(5 + prd - 1)}${StartRow-4}="Дом", SUMIFS({CRM_name}!$AY:$AY,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,{CRM_name}!$AM:$AM,${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДДУ")+' \
-                                                      f'SUMIFS({CRM_name}!$BC:$BC,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,{CRM_name}!$AM:$AM,${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДДУ"),' \
-                                                      f'SUMIFS({CRM_name}!$AY:$AY,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,{CRM_name}!$AM:$AM,${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДДУ")+' \
-                                                      f'SUMIFS({CRM_name}!$BC:$BC,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,{CRM_name}!$AM:$AM,${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДДУ")+{get_column_letter(5 + prd - 1)}:{get_column_letter(5 + prd - 1)})'
-
-                    ws.Cells(StartRow + i,
-                             5 + prd + len(periods) + 1).Formula = f'=IF({get_column_letter(5 + prd + len(periods))}{StartRow + i}="", SUMIFS({CRM_name}!$AY:$AY,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,{CRM_name}!$AM:$AM,${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДКП")+' \
-                                        f'SUMIFS({CRM_name}!$BC:$BC,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,{CRM_name}!$AM:$AM,${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДКП"),' \
-                                        f'SUMIFS({CRM_name}!$AY:$AY,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,{CRM_name}!$AM:$AM,${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДКП")+' \
-                                        f'SUMIFS({CRM_name}!$BC:$BC,{CRM_name}!$AT:$AT,"Да",{CRM_name}!$AR:$AR,$C:$C,{CRM_name}!$AS:$AS,$D:$D,{CRM_name}!$AM:$AM,${Sales_metres_row}:${Sales_metres_row},{CRM_name}!$AV:$AV,"Да",{CRM_name}!$AQ:$AQ,"ДКП")+{get_column_letter(5 + prd + len(periods))}:{get_column_letter(5 + prd + len(periods))})'
-            StartRow -= 6
-        StartRow+=6
-        ws.Cells(StartRow + len(df) + 1, 2).Value = 'ИТОГО'
-        ws.Cells(StartRow + len(df) + 1, 2).Font.Bold = True
-        ws.Cells(StartRow-4, 5).Value = header
-        rng = ws.Range(ws.Cells(StartRow - 4, 5),ws.Cells(StartRow-4, 5 + len(periods) - 1))
-        rng.HorizontalAlignment = 7
-        decorate_cells(rng, v[0], v[1], 10, 'Arial', False)
-        # ws.Cells(StartRow-4, 5).Value = header
-        # align_cells(ws.Range(ws.Cells(StartRow, 5),ws.Cells(StartRow, 4 + len(periods))), v[0], v[1])
-        ws.Cells(StartRow-4, 5 + len(periods) + 1).Value = header
-        rng = ws.Range(ws.Cells(StartRow-4, 5 + len(periods) + 1),ws.Cells(StartRow-4, 5 + len(periods)*2))
-        rng.HorizontalAlignment = 7
-        decorate_cells(rng, v[0], v[1], 10, 'Arial', False)
-        # align_cells(ws.Cells(StartRow + len(df), 5 + i), v[0], v[1])
-
-        for i in range(len(periods)):
-            ws.Cells(StartRow + len(df), 5 + i).Value = '' # format
-
-            ws.Cells(StartRow + len(df)+1, 5 + i).Value = f'=SUM({get_column_letter(5 + i)}{StartRow}:{get_column_letter(5 + i)}{StartRow + len(df)})'
-            ws.Cells(StartRow + len(df) + 1, 5 + i).Font.Bold = True
-
-            ws.Cells(StartRow + len(df), 5 + i + len(periods) + 1).Value = ''  # format
-            ws.Cells(StartRow + len(df) + 1, 5 + i + len(periods) + 1).Value = f'=SUM({get_column_letter(5 + i + len(periods) + 1)}{StartRow}:{get_column_letter(5 + i + len(periods) + 1)}{StartRow + len(df)})'
-            ws.Cells(StartRow + len(df) + 1, 5 + i + len(periods) + 1).Font.Bold = True
-
-        rng = ws.Range(ws.Cells(StartRow - 4, 2), (ws.Cells(StartRow + len(df)+1, 4 + len(periods))))
-        right_rng = ws.Range(ws.Cells(StartRow - 4, 4 + len(periods) + 2), (ws.Cells(StartRow + len(df)+1, 4 + len(periods)*2 + 1)))
-        set_border(ws, rng, StartRow - 4, 2, StartRow + len(df)+1, 4 + len(periods), rgbToInt(v[0]), True)
-        # set_border(ws, rng, StartRow - 4, 2, StartRow + len(df) + 1, 5, True)
-        set_border(ws, right_rng, StartRow - 4, 4 + len(periods) + 2, StartRow + len(df)+1, 4+len(periods)*2 + 1, rgbToInt(v[0]), True)
+            elif k == 'Продажи тыс. руб. (накопительный итог) без учета ВГО и дополнительных корректировок':
+                if j == 5:
+                    left_lst = [SALES_MONEY_WITH_FIRST_COLUMN.substitute(CRM_ROW=CRM_row + i, CRM_PERIOD=CRM_row-4,SALES_PERIOD=Sales_metres_row,CRM_TYPE=CRM_row-5, DOC_TYPE='ДДУ')
+                            for i in range(len(df))]
+                    right_lst = [SALES_MONEY_WITH_FIRST_COLUMN.substitute(CRM_ROW=CRM_row + i, CRM_PERIOD=CRM_row-4,SALES_PERIOD=Sales_metres_row,CRM_TYPE=CRM_row-5, DOC_TYPE='ДКП')
+                            for i in range(len(df))]
+                else:
+                    left_lst = [SALES_MONEY_WITH_OTHER_COLUMN.substitute(CRM_ROW=CRM_row + i, CRM_PERIOD=CRM_row-4,SALES_PERIOD=Sales_metres_row,CRM_TYPE=CRM_row-5, DOC_TYPE='ДДУ', PREV_COL=get_column_letter(j-1))
+                            for i in range(len(df))]
+                    right_lst = [SALES_MONEY_WITH_OTHER_COLUMN.substitute(CRM_ROW=CRM_row + i, CRM_PERIOD=CRM_row-4,SALES_PERIOD=Sales_metres_row,CRM_TYPE=CRM_row-5, DOC_TYPE='ДКП', PREV_COL=get_column_letter(j+len(periods)))
+                            for i in range(len(df))]
+            elif k == 'Корректировка тыс.руб.':
+                CORRECTED_MONEY_ROW = StartRow + 1
+                left_lst = [CORRECTED_SALES.substitute(CRM_NAME=CRM_name, SALES_PERIOD=Sales_metres_row,
+                                                        DOC_TYPE='ДДУ')] * len(df)
+                right_lst = [CORRECTED_SALES.substitute(CRM_NAME=CRM_name, SALES_PERIOD=Sales_metres_row,
+                                                         DOC_TYPE='ДКП')] * len(df)
+            elif k == 'Продажи тыс. руб. (накопительный итог) с учетом ВГО и дополнительных корректировок':
+                if j == 5:
+                    left_lst = [SALES_MONEY_WITHOUT_FIRST_COLUMN.substitute(CRM_ROW=CRM_row + i, CRM_PERIOD=CRM_row-4,SALES_PERIOD=Sales_metres_row,CRM_TYPE=CRM_row-5,DOC_TYPE='ДДУ',SALES_CORRECTED=CORRECTED_MONEY_ROW+i-1)
+                                for i in range(len(df))]
+                    right_lst = [SALES_MONEY_WITHOUT_FIRST_COLUMN.substitute(CRM_ROW=CRM_row + i, CRM_PERIOD=CRM_row-4,SALES_PERIOD=Sales_metres_row,CRM_TYPE=CRM_row-5,DOC_TYPE='ДКП',SALES_CORRECTED=CORRECTED_MONEY_ROW+i-1)
+                                for i in range(len(df))]
+                else:
+                    left_lst = [SALES_MONEY_WITHOUT_OTHER_COLUMN.substitute(CRM_ROW=CRM_row + i, CRM_PERIOD=CRM_row-4,SALES_PERIOD=Sales_metres_row,CRM_TYPE=CRM_row-5,DOC_TYPE='ДДУ',SALES_CORRECTED=CORRECTED_MONEY_ROW+i-1, PREV_COL=get_column_letter(j - 1))
+                                for i in range(len(df))]
+                    right_lst = [SALES_MONEY_WITHOUT_OTHER_COLUMN.substitute(CRM_ROW=CRM_row + i, CRM_PERIOD=CRM_row-4,SALES_PERIOD=Sales_metres_row,CRM_TYPE=CRM_row-5,DOC_TYPE='ДКП',SALES_CORRECTED=CORRECTED_MONEY_ROW+i-1,PREV_COL=get_column_letter(j+len(periods)))
+                                for i in range(len(df))]
+            elif k == 'Партнерские продажи, кв. м.':
+                if j == 5:
+                    left_lst = [PARTNER_SALES_METRES_FIRST_COLUMN.substitute(CRM_NAME=CRM_name, SALES_PERIOD=Sales_metres_row,DOC_TYPE='ДДУ')
+                                for i in range(len(df))]
+                    right_lst = [PARTNER_SALES_METRES_FIRST_COLUMN.substitute(CRM_NAME=CRM_name, SALES_PERIOD=Sales_metres_row,DOC_TYPE='ДКП')
+                                for i in range(len(df))]
+                else:
+                    left_lst = [PARTNER_SALES_METRES_OTHER_COLUMN.substitute(CRM_NAME=CRM_name, SALES_PERIOD=Sales_metres_row,DOC_TYPE='ДДУ', PREV_COL=get_column_letter(j - 1))
+                                for i in range(len(df))]
+                    right_lst = [PARTNER_SALES_METRES_OTHER_COLUMN.substitute(CRM_NAME=CRM_name, SALES_PERIOD=Sales_metres_row,DOC_TYPE='ДКП',PREV_COL=get_column_letter(j+len(periods)))
+                                for i in range(len(df))]
+            else:
+                if j == 5:
+                    left_lst = [PARTNER_SALES_MONEY_FIRST_COLUMN.substitute(CRM_NAME=CRM_name, SALES_PERIOD=Sales_metres_row,DOC_TYPE='ДДУ')
+                                for i in range(len(df))]
+                    right_lst = [PARTNER_SALES_MONEY_FIRST_COLUMN.substitute(CRM_NAME=CRM_name, SALES_PERIOD=Sales_metres_row,DOC_TYPE='ДКП')
+                                for i in range(len(df))]
+                else:
+                    left_lst = [PARTNER_SALES_MONEY_OTHER_COLUMN.substitute(CRM_NAME=CRM_name, SALES_PERIOD=Sales_metres_row,DOC_TYPE='ДДУ', PREV_COL=get_column_letter(j - 1))
+                                for i in range(len(df))]
+                    right_lst = [PARTNER_SALES_MONEY_OTHER_COLUMN.substitute(CRM_NAME=CRM_name, SALES_PERIOD=Sales_metres_row,DOC_TYPE='ДКП',PREV_COL=get_column_letter(j+len(periods)))
+                                for i in range(len(df))]
 
 
+            left_lst.extend(['', f'=SUM({get_column_letter(j)}{StartRow}:{get_column_letter(j)}{StartRow+len(df)-1})'])
+            left_value_dict[str(j)] = left_lst
+
+            right_lst.extend(['', f'=SUM({get_column_letter(6 + j-5 + len(periods))}{StartRow}:{get_column_letter(6 + j-5 + len(periods))}{StartRow + len(df) - 1})' ])
+            right_value_dict[str(j)] = right_lst
+
+        left_value_frame = pd.DataFrame().from_dict(left_value_dict, orient='columns')
+        right_value_frame = pd.DataFrame().from_dict(right_value_dict, orient='columns')
+
+        rng = ws.Range(ws.Cells(StartRow, 5), ws.Cells(StartRow + len(left_value_frame.index) - 1, 5 + len(left_value_frame.columns) - 1))
+        rng.Value = left_value_frame.values
+        rng = ws.Range(ws.Cells(StartRow, 2),ws.Cells(StartRow + len(left_value_frame.index) - 1, 5 + len(left_value_frame.columns) - 1))
+        set_border(ws, rng, StartRow, 2, StartRow + len(left_value_frame.index) - 1, 5 + len(left_value_frame.columns) - 1)
+
+        rng.NumberFormat = '# ###;(# ###);"-"'
+        rng = ws.Range(ws.Cells(StartRow, 5), ws.Cells(StartRow + len(left_value_frame.index) - 3, 5 + len(left_value_frame.columns) - 1))
+        rng.Interior.Color = rgbToInt((221, 235, 247))
+
+        rng = ws.Range(ws.Cells(StartRow, 6+len(periods)), ws.Cells(StartRow + len(right_value_frame.index) - 1,  6+len(periods) + len(right_value_frame.columns) - 1))
+        rng.Value = right_value_frame.values
+        set_border(ws, rng, StartRow, 6+len(periods), StartRow + len(right_value_frame.index) - 1, 6+len(periods) + len(right_value_frame.columns) - 1, option = True)
+        rng.NumberFormat = '# ###;(# ###);"-"'
+
+        rng = ws.Range(ws.Cells(StartRow, 6 + len(periods)), ws.Cells(StartRow + len(right_value_frame.index) - 3, 6 + len(periods) + len(right_value_frame.columns) - 1))
+        rng.Interior.Color = rgbToInt((221, 235, 247))
         StartRow += len(df) + 3
-        # for col in ['B', 'C', 'D', 'E', 'G']:
-        #     ws.Range(f'{col}:{col}').EntireColumn.AutoFit()
-    # for col in ['C:C', 'D:D']:
-    #     ws.Range(col).NumberFormat = '@'
-    #     ws.Range(col).Replace(',', '.')
+
     ws.Cells(2, 2).Value = f'СЗ САМОЛЕТ - {prj}'
     decorate_cells(ws.Cells(2, 2), (255, 255, 255), (0, 0, 0), 20, 'Arial', True, True)
     ws.Cells(4, 2).Value = 'Проверка полноты отражения данных'
@@ -746,6 +783,7 @@ def fill_data(ws,df, DDU_name, DKP_name, CRM_name, prj, period):
     set_conditional_formatting(ws.Range(ws.Cells(10, 6), ws.Cells(11, 8)))
     set_conditional_formatting(ws.Range(ws.Cells(15, 5), ws.Cells(16, 5)))
     rng = ws.Range(ws.Cells(14, 2), ws.Cells(16, 5))
+    set_column_width(ws, periods)
     for border_id in range(7, 13):
         if border_id in (11, 12):
             rng.Borders(border_id).LineStyle = -4119
@@ -753,6 +791,16 @@ def fill_data(ws,df, DDU_name, DKP_name, CRM_name, prj, period):
         else:
             rng.Borders(border_id).LineStyle = 1
             rng.Borders(border_id).Weight = 2
+    EndRow = ws.Range("{0}{1}".format('B', ws.Rows.Count)).End(-4162).Row
+    row = 1
+    while EndRow >=row:
+        ADDRESS =  ws.Range(f'B{row}:B{EndRow}').Find('ИТОГО')
+        ADDRESS.Font.Bold = True
+        if row> 1 and ws.Range(f'B{row - 1}:B{EndRow}').Find('Если необходимо вставить дополнительные очереди/дома. то добавьте строку перед текущей') != None:
+            ws.Range(f'B{row - 1}:B{EndRow}').Find('Если необходимо вставить дополнительные очереди/дома. то добавьте строку перед текущей').Font.Color = rgbToInt((255, 0, 0))
+            ws.Range(f'B{row - 1}:B{EndRow}').Find('Если необходимо вставить дополнительные очереди/дома. то добавьте строку перед текущей').Font.Bold = True
+        row = ADDRESS.Row + 2
+
 
 def set_conditional_formatting(rng):
     positive_cond = rng.FormatConditions.Add(1, 3, "КОРРЕКТНО")
@@ -816,3 +864,189 @@ def set_border(ws, rng, init_row, init_col, last_row, last_col, color = '', opti
         ws.Range((ws.Cells(last_row, init_col)), (ws.Cells(last_row, last_col))).Borders(8).Weight = 3
         ws.Range(ws.Cells(init_row, init_col+1), ws.Cells(last_row, init_col+3)).Borders(10).Weight = 2
 
+def new_align_cells(rng, is_merge = True):
+    rng.MergeCells = is_merge
+    rng.VerticalAlignment = -4108
+    rng.HorizontalAlignment = -4108
+    # decorate_cells(rng, rgbToInt(interior_color), rgbToInt(font_color), 10, 'Arial', True)
+
+
+def fill_pattern(rng):
+    # rng.Interior.Pattern = 14
+    rng.Interior.Pattern = 2
+    rng.Interior.Color = rgbToInt((255, 255, 255))
+
+def create_index_dict(key, periods):
+    count = 0
+    dct = dict()
+    if key == 'По данным 1С':
+        pattern1 = ['ДДУ', 'ДДУ', 'ДДУ', 'ДДУ', 'ДДУ', '', 'ДКП', 'ДКП', '', '']
+        pattern2 = ['Реализация_ДДУ', 'Реализация_ДДУ', 'ДДУ', 'ДДУ', '', '', 'Реализация_ДКП', 'Реализация_ДКП',
+                    'ДКП', 'ДКП']
+
+        for period in periods:
+            pattern3 = [period] * 10
+            for ptrn1, ptrn2, ptrn3 in zip(pattern1, pattern2, pattern3):
+                if count == 0:
+                    dct[str(-1)] = ['Index 1', 'Index 2', 'Index 3']
+                dct[str(count)] = [ptrn1, ptrn2, ptrn3]
+                count += 1
+    elif key == 'По данным CRM':
+        pattern1 = ['Реализация_ДДУ', 'Реализация_ДДУ', 'ДДУ', 'ДДУ', '', '', 'Реализация_ДКП', 'Реализация_ДКП',
+                    'ДКП', 'ДКП']
+        for period in periods:
+            pattern2 = [period] * 10
+            for ptrn1, ptrn2 in zip(pattern1, pattern2):
+                if count == 0:
+                    dct[str(-1)] = ['Index 1', 'Index 2']
+                dct[str(count)] = [ptrn1, ptrn2]
+                count += 1
+    else:
+        for period in periods:
+            pattern1 = [period] * 10
+            for ptrn1 in pattern1:
+                if count == 0:
+                    dct[str(-1)] = 'Index 1'
+                dct[str(count)] = ptrn1
+                count += 1
+    return dct
+
+def create_column_dict(key, periods, StartRow, DICT_name):
+    column_dict = dict()
+    count = 0
+    if key == 'По данным 1С':
+        pattern1 = []
+        pattern2 = ['Реализация по ДДУ', '', '', '', '', '', 'Реализация по ДКП', '', '', '']
+        pattern3 = ['Заключение', 'Расторжение', 'Поступление ДС', 'Возврат ДС', 'Прочее движение', '',
+                    'Заключение', 'Расторжение', '', '']
+        for i in range(len(periods)):
+            formula = f'=IF(ISERROR(SEARCH("_",{get_column_letter(5 + 10 * i)}{StartRow + 3},1)),' \
+                      f'CONCATENATE({get_column_letter(5 + 10 * i)}{StartRow + 3}," год"),' \
+                      f'CONCATENATE(VLOOKUP(MID({get_column_letter(5 + 10 * i)}{StartRow + 3},' \
+                      f'1,SEARCH("_",{get_column_letter(5 + 10 * i)}{StartRow + 3})-1)+0,' \
+                      f'{DICT_name}!$A:$B,2,0),"-е ",' \
+                      f'RIGHT({get_column_letter(5 + 10 * i)}{StartRow + 3},4)," года"))'
+            pattern1.append(formula)
+            pattern1.extend(['', '', '', '', '', '', '', '', ''])
+
+            for ptrn1, ptrn2, ptrn3 in zip(pattern1, pattern2, pattern3):
+                column_dict[str(count)] = [ptrn1, ptrn2, ptrn3]
+                count += 1
+            pattern1 = []
+
+        for _ in periods:
+            for ptrn1, ptrn2, ptrn3 in zip(pattern1, pattern2, pattern3):
+                column_dict[str(count)] = [ptrn1, ptrn2, ptrn3]
+                count += 1
+    elif key == 'По данным CRM':
+        pattern2 = ['Реализация по ДДУ', '', '', '', '', '', 'Реализация по ДКП', '', '', '']
+        pattern3 = ['Заключение\n(тыс.руб.)', 'Расторжение\n(тыс.руб.)', 'Заключение\n(кв.м.)', 'Расторжение\n(кв.м.)',
+                    '',
+                    '', 'Заключение\n(тыс.руб.)', 'Расторжение\n(тыс.руб.)', 'Заключение\n(кв.м.)',
+                    'Расторжение\n(кв.м.)']
+        for i in range(len(periods)):
+            pattern1 = []
+            formula = f'=IF(ISERROR(SEARCH("_",{get_column_letter(5 + 10 * i)}{StartRow + 2},1)),' \
+                      f'CONCATENATE({get_column_letter(5 + 10 * i)}{StartRow + 2}," год"),' \
+                      f'CONCATENATE(VLOOKUP(MID({get_column_letter(5 + 10 * i)}{StartRow + 2},' \
+                      f'1,SEARCH("_",{get_column_letter(5 + 10 * i)}{StartRow + 2})-1)+0,' \
+                      f'{DICT_name}!$A:$B,2,0),"-е ",' \
+                      f'RIGHT({get_column_letter(5 + 10 * i)}{StartRow + 2},4)," года"))'
+            pattern1.append(formula)
+            pattern1.extend(['', '', '', '', '', '', '', '', ''])
+            for ptrn1, ptrn2, ptrn3 in zip(pattern1, pattern2, pattern3):
+                column_dict[str(count)] = [ptrn1, ptrn2, ptrn3]
+                count += 1
+    else:
+        pattern2 = ['Разница', '', '', '', '', '', '', 'Разница по ДКП', '', '']
+        pattern3 = ['Заключение', 'Расторжение', '', '', '', '',
+                    'Заключение', 'Расторжение', '', '', ]
+        for i in range(len(periods)):
+            pattern1 = []
+            formula = f'=IF(ISERROR(SEARCH("_",{get_column_letter(5 + 10 * i)}{StartRow + 1},1)),' \
+                      f'CONCATENATE({get_column_letter(5 + 10 * i)}{StartRow + 1}," год"),' \
+                      f'CONCATENATE(VLOOKUP(MID({get_column_letter(5 + 10 * i)}{StartRow + 1},' \
+                      f'1,SEARCH("_",{get_column_letter(5 + 10 * i)}{StartRow + 1})-1)+0,' \
+                      f'{DICT_name}!$A:$B,2,0),"-е ",' \
+                      f'RIGHT({get_column_letter(5 + 10 * i)}{StartRow + 1},4)," года"))'
+            pattern1.append(formula)
+            pattern1.extend(['', '', '', '', '', '', '', '', ''])
+            for ptrn1, ptrn2, ptrn3 in zip(pattern1, pattern2, pattern3):
+                column_dict[str(count)] = [ptrn1, ptrn2, ptrn3]
+                count += 1
+    return column_dict
+
+
+def create_value_dict(ws, df, key, prj, periods, StartRow, BIT_row, CRM_row, DDU_name, DKP_name, CRM_name):
+    value_dict = dict()
+    count = 5
+    if key == 'По данным 1С':
+
+        PeriodRow = ws.Range(ws.Cells(StartRow-10, 4), ws.Cells(StartRow, 4)).Find('Index 3').Row
+        DDU_FORMULA = f'=SUMIFS({DDU_name}!$AB:$AB,' \
+                      f'{DDU_name}!$X:$X,${PeriodRow + 3}:${PeriodRow + 3},' \
+                      f'{DDU_name}!$U:$U,${PeriodRow}:${PeriodRow},' \
+                      f'{DDU_name}!$V:$V,$C:$C,{DDU_name}!$W:$W,$D:$D)'
+        DKP_FORMULA = f'=SUMIFS({DKP_name}!$AB:$AB,' \
+                      f'{DKP_name}!$X:$X,${PeriodRow + 3}:${PeriodRow + 3},' \
+                      f'{DKP_name}!$U:$U,${PeriodRow}:${PeriodRow},' \
+                      f'{DKP_name}!$V:$V,$C:$C,{DKP_name}!$W:$W,$D:$D)'
+        for _ in periods:
+            for i in range(10):
+                if i <= 4:
+                    lst = [DDU_FORMULA] * len(df)
+                elif i == 5 or i in (8, 9):
+                    lst = [''] * len(df)
+                else:
+                    lst = [DKP_FORMULA] * len(df)
+                EdnRow = ws.Range("{0}{1}".format('B', ws.Rows.Count)).End(-4162).Row
+                StartSumRow = ws.Range(ws.Cells(StartRow, 2), ws.Cells(EdnRow, 2)).Find(prj).Row - 1
+                lst.extend(['', f'=SUM({get_column_letter(count)}{StartSumRow}:{get_column_letter(count)}{StartSumRow + len(df) - 1})'])
+                value_dict[str(count)] = lst
+                count += 1
+    elif key == 'По данным CRM':
+        PeriodRow = ws.Range(ws.Cells(StartRow-10, 4), ws.Cells(StartRow, 4)).Find('Index 2').Row
+        DDU_FORMULA_METRES_CLOSE = FORMULA_METRES_CLOSE.substitute(CRM_NAME=CRM_name, SALES_PERIOD=PeriodRow,
+                                                                   DOC_TYPE='ДДУ')
+        DKP_FORMULA_METRES_CLOSE = FORMULA_METRES_CLOSE.substitute(CRM_NAME=CRM_name, SALES_PERIOD=PeriodRow,
+                                                                   DOC_TYPE='ДКП')
+        DDU_FORMULA_METRES_DENIAL = FORMULA_METRES_DENIAL.substitute(CRM_NAME=CRM_name, SALES_PERIOD=PeriodRow,
+                                                                     DOC_TYPE='ДДУ')
+        DKP_FORMULA_METRES_DENIAL = FORMULA_METRES_DENIAL.substitute(CRM_NAME=CRM_name, SALES_PERIOD=PeriodRow,
+                                                                     DOC_TYPE='ДКП')
+        DDU_FORMULA_MONEY_CLOSE = FORMULA_MONEY_CLOSE.substitute(CRM_NAME=CRM_name, SALES_PERIOD=PeriodRow,
+                                                                 DOC_TYPE='ДДУ')
+        DKP_FORMULA_MONEY_CLOSE = FORMULA_MONEY_CLOSE.substitute(CRM_NAME=CRM_name, SALES_PERIOD=PeriodRow,
+                                                                 DOC_TYPE='ДКП')
+        DDU_FORMULA_MONEY_DENIAL = FORMULA_MONEY_DENIAL.substitute(CRM_NAME=CRM_name, SALES_PERIOD=PeriodRow,
+                                                                   DOC_TYPE='ДДУ')
+        DKP_FORMULA_MONEY_DENIAL = FORMULA_MONEY_DENIAL.substitute(CRM_NAME=CRM_name, SALES_PERIOD=PeriodRow,
+                                                                   DOC_TYPE='ДКП')
+
+        FORMULS = [DDU_FORMULA_METRES_CLOSE, DDU_FORMULA_METRES_DENIAL, DDU_FORMULA_MONEY_CLOSE,
+                   DDU_FORMULA_MONEY_DENIAL, '', '',
+                   DKP_FORMULA_METRES_CLOSE, DKP_FORMULA_METRES_DENIAL, DKP_FORMULA_MONEY_CLOSE,
+                   DKP_FORMULA_MONEY_DENIAL]
+        for _ in periods:
+            for i, formula in enumerate(FORMULS):
+                lst = [formula] * len(df)
+                EdnRow = ws.Range("{0}{1}".format('B', ws.Rows.Count)).End(-4162).Row
+                StartSumRow = ws.Range(ws.Cells(StartRow, 2), ws.Cells(EdnRow, 2)).Find(prj).Row - 1
+                lst.extend(['', f'=SUM({get_column_letter(count)}{StartSumRow}:{get_column_letter(count)}{StartSumRow + len(df) - 1})'])
+                value_dict[str(count)] = lst
+                count += 1
+    else:
+        for _ in periods:
+            for i in range(10):
+                if i in (0, 1, 6, 7):
+                    lst = [f'={BIT_row + k}:{BIT_row + k}-{CRM_row + k}:{CRM_row + k}' for k in range(len(df))]
+                    # value_dict[str(count)] = [f'{BIT_row}:{BIT_row}-{CRM_row}:{CRM_row}'] * 10
+                else:
+                    lst = [''] * len(df)
+                    # value_dict[str(count)] = [''] * 10
+                EdnRow = ws.Range("{0}{1}".format('B', ws.Rows.Count)).End(-4162).Row
+                StartSumRow = ws.Range(ws.Cells(StartRow, 2), ws.Cells(EdnRow, 2)).Find(prj).Row - 1
+                lst.extend(['', f'=SUM({get_column_letter(count)}{StartSumRow}:{get_column_letter(count)}{StartSumRow + len(df) - 1})'])
+                value_dict[str(count)] = lst
+                count += 1
+    return value_dict
