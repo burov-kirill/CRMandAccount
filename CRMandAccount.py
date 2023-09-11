@@ -1,12 +1,11 @@
 import os
-import shutil
 import sys
 from time import time
-from logs import log
-from manage import main_func
+from settings.logs import log
+from functions.manage import main_func
 import PySimpleGUI as sg
 from interfaces.user_interface import init_panel, end_panel, error_panel
-from search_function import create_projects_list
+from functions.search_function import create_projects_list
 from update_scheme.update import killProcess, get_subpath
 
 if __name__ == '__main__':
