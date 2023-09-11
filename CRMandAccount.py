@@ -55,6 +55,7 @@ if __name__ == '__main__':
                     except Exception as exp:
                         log.info(f'При обработке следующего проекта {prj["prj"]} возникло исключение:\n')
                         log.exception(exp)
+                        os.system('TASKKILL /F /IM excel.exe')
                     else:
                         log.info(f'Обработка проекта {prj["prj"]} успешно завершена')
                         avg_stop_time = time()
@@ -69,6 +70,7 @@ if __name__ == '__main__':
                     log.info(f'При обработке следующего файла {user_values["prj"]} возникло исключение:\n')
                     log.exception(exp)
                     check_report = False
+                    os.system('TASKKILL /F /IM excel.exe')
                 else:
                     log.info(f'Обработка проекта {user_values["prj"]} успешно завершена')
                     check_report = True

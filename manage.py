@@ -177,7 +177,7 @@ def change_range(sheet,EndRow, user_values, obj, create_new_file):
         sheet.Range(sheet.Cells(InitRow, InitCol), sheet.Cells(InitRow + len(formula_frame.index) - 1, InitCol + len(formula_frame.columns) - 1)).Value = formula_frame.values
 def get_subpath(path, i, opt = True):
     while i > 0:
-        if opt:
+        if opt and path.rfind('\\') == -1:
             path = path[:path.rfind('/')]
         else:
             path = path[:path.rfind('\\')]
@@ -225,13 +225,13 @@ def extend_list(period_list, current_list, prd):
     unique_list = set(current_list)
     result_list = unique_period_list.difference(unique_list).union(unique_list)
     if prd != 'Год':
-        for year in range(2020, int(max(result_list, key=lambda x: (int(x.split('_')[1]), int(x.split('_')[0]))).split('_')[1])):
+        for year in range(2020, int(max(result_list, key=lambda x: int(x.split('_')[1])).split('_')[1]) + 1):
             if prd == 'Месяц':
                 period = range(1, 13)
             elif prd == 'Полугодие':
                 period = range(1, 3)
             else:
-                period = range(1, 7)
+                period = range(1, 5)
             for p in period:
                 if str(f'{p}_{year}') not in result_list:
                     result_list.add(str(f'{p}_{year}'))
@@ -393,7 +393,6 @@ def write_new_data(wb, files):
                     sheet.Range(col).NumberFormat = '@'
                     sheet.Range(col).Replace(',', '.')
 
-
             sheet.Range(sheet.Cells(StartRow, files[i].column),  # Cell to start the "paste"
                         sheet.Cells(StartRow + len(df.index) - 1,
                                     files[i].column + len(df.columns) - 1)  # No -1 for the index
@@ -408,7 +407,6 @@ def write_new_data(wb, files):
                 sheet.Range(f'B{6}:AB{6}').Copy()
                 sheet.Range(f'B{StartRow}:AB{UpdateEndRow}').PasteSpecial(-4122)
 
-
         if obj.type_file in ('AccPay', 'AccSales'):
             if not obj.is_empty:
                 pivot_sheet[obj.type_file] = obj.period
@@ -421,6 +419,7 @@ def write_new_data(wb, files):
 
     sheet = wb.Worksheets([ws.Name for ws in wb.Sheets if 'Свод' in ws.Name][0])
     pivot_sheet['DownTable'] = max(pivot_sheet.values(), key=lambda x: len(x))
+    return (sheet, pivot_sheet)
 
 def custom_replace(obj):
     if isinstance(obj, list):
@@ -457,7 +456,9 @@ def main_func(user_values, pg_bar, out):
     if user_values['--FROM_PERIOD--'] != user_values['--TO_PERIOD--'] and not user_values['--CREATE_FILE--']:
         log.info(f'Изменение исходных данных в случае выбора разных временных периодов')
         change_period = True
-        new_file_name = get_subpath(user_values['SummaryFile'],1)+f'/СверкаCRM_{"".join(user_values["prj"])}_{user_values["--TO_PERIOD--"]}.xlsb'
+        if not os.path.isdir(get_subpath(user_values['SummaryFile'],1)+'/Итоговые_файлы'):
+            os.mkdir(get_subpath(user_values['SummaryFile'],1)+'/Итоговые_файлы')
+        new_file_name = get_subpath(user_values['SummaryFile'],1)+f'/Итоговые_файлы/СверкаCRM_{"".join(user_values["prj"])}_{user_values["--TO_PERIOD--"]}.xlsb'
         wb.SaveCopyAs(os.path.abspath((new_file_name)))
         wb.Close()
         wb = Excel.Workbooks.Open(os.path.abspath((new_file_name)))
@@ -570,72 +571,73 @@ def main_func(user_values, pg_bar, out):
     out.Update('Запись в файл')
     log.info(f'Запись в файл')
     pg_bar.Update(2)
+    sheet, pivot_sheet = write_new_data(wb, files)
 
-    for i, obj in enumerate(files):
-        add_col = files[i].additional_column
-        if files[i].type_file != 'CRM' and files[i].is_empty == False:
-            sheet = wb.Worksheets(files[i].sheet_name)
-            StartRow = get_last_row_from_column(sheet, option=False) + 2
-            df = files[i].df
-            add_df = files[i].additional_frame
-            if files[i].type_file == 'AccPay':
-                df = create_cumsum_column(sheet, df)
-        elif files[i].type_file == 'CRM' and files[i].is_empty == False:
-            sheet = wb.Worksheets(files[i].sheet_name)
-            if sheet.FilterMode:
-                sheet.ShowAllData()
-            StartRow = get_last_row_from_column(sheet, option=False) + 2
-            sheet.Range(f"B5:BE{StartRow}").ClearContents()
-            df = files[i].full_df
-            add_df = files[i].additional_frame
-            StartRow = 5
-        if files[i].is_empty == False:
-            if files[i].type_file != 'CRM':
-                for col in ['L:L', 'N:N', 'W:W']:
-                    sheet.Range(col).NumberFormat = '@'
-                    sheet.Range(col).Replace(',', '.')
-                for col in ['M:M', 'Q:Q', 'AB:AB', 'O:O']:
-                    sheet.Range(col).NumberFormat = '# ##0'
-            else:
-                spl_col = get_split_col(sheet, 4)
-                lst = sheet.Range(sheet.Cells(4, 1), sheet.Cells(4, spl_col)).Value
-                flat_lst = [item for sublist in lst for item in sublist]
-                flat_lst = list(map(lambda x: x.replace(' ', '').replace('\n', ''), flat_lst))
-                df = df[flat_lst]
-                add_col = spl_col + 2
-
-                for col in ['T:T', 'U:U', 'AR:AR', 'AS:AS']:
-                    sheet.Range(col).NumberFormat = '@'
-                    sheet.Range(col).Replace(',', '.')
-
-
-            sheet.Range(sheet.Cells(StartRow, files[i].column),  # Cell to start the "paste"
-                        sheet.Cells(StartRow + len(df.index) - 1,
-                                    files[i].column + len(df.columns) - 1)  # No -1 for the index
-                        ).Value = df.values
-
-            sheet.Range(sheet.Cells(StartRow, add_col),  # Cell to start the "paste"
-                        sheet.Cells(StartRow + len(add_df.index) - 1,
-                                    add_col + len(add_df.columns) - 1)  # No -1 for the index
-                        ).Value = add_df.values
-            UpdateEndRow = get_last_row_from_column(sheet, 'B', True) + 1
-            if files[i].type_file != 'CRM':
-                sheet.Range(f'B{6}:AB{6}').Copy()
-                sheet.Range(f'B{StartRow}:AB{UpdateEndRow}').PasteSpecial(-4122)
-
-
-        if obj.type_file in ('AccPay', 'AccSales'):
-            if not obj.is_empty:
-                pivot_sheet[obj.type_file] = obj.period
-            else:
-                pivot_sheet[obj.type_file] = []
-
-    for k, v in pivot_sheet.items():
-        if v == []:
-            pivot_sheet[k] = max(pivot_sheet.values(), key=lambda x: len(x))
-
-    sheet = wb.Worksheets([ws.Name for ws in wb.Sheets if 'Свод' in ws.Name][0])
-    pivot_sheet['DownTable'] = max(pivot_sheet.values(), key=lambda x: len(x))
+    # for i, obj in enumerate(files):
+    #     add_col = files[i].additional_column
+    #     if files[i].type_file != 'CRM' and files[i].is_empty == False:
+    #         sheet = wb.Worksheets(files[i].sheet_name)
+    #         StartRow = get_last_row_from_column(sheet, option=False) + 2
+    #         df = files[i].df
+    #         add_df = files[i].additional_frame
+    #         if files[i].type_file == 'AccPay':
+    #             df = create_cumsum_column(sheet, df)
+    #     elif files[i].type_file == 'CRM' and files[i].is_empty == False:
+    #         sheet = wb.Worksheets(files[i].sheet_name)
+    #         if sheet.FilterMode:
+    #             sheet.ShowAllData()
+    #         StartRow = get_last_row_from_column(sheet, option=False) + 2
+    #         sheet.Range(f"B5:BE{StartRow}").ClearContents()
+    #         df = files[i].full_df
+    #         add_df = files[i].additional_frame
+    #         StartRow = 5
+    #     if files[i].is_empty == False:
+    #         if files[i].type_file != 'CRM':
+    #             for col in ['L:L', 'N:N', 'W:W']:
+    #                 sheet.Range(col).NumberFormat = '@'
+    #                 sheet.Range(col).Replace(',', '.')
+    #             for col in ['M:M', 'Q:Q', 'AB:AB', 'O:O']:
+    #                 sheet.Range(col).NumberFormat = '# ##0'
+    #         else:
+    #             spl_col = get_split_col(sheet, 4)
+    #             lst = sheet.Range(sheet.Cells(4, 1), sheet.Cells(4, spl_col)).Value
+    #             flat_lst = [item for sublist in lst for item in sublist]
+    #             flat_lst = list(map(lambda x: x.replace(' ', '').replace('\n', ''), flat_lst))
+    #             df = df[flat_lst]
+    #             add_col = spl_col + 2
+    #
+    #             for col in ['T:T', 'U:U', 'AR:AR', 'AS:AS']:
+    #                 sheet.Range(col).NumberFormat = '@'
+    #                 sheet.Range(col).Replace(',', '.')
+    #
+    #
+    #         sheet.Range(sheet.Cells(StartRow, files[i].column),  # Cell to start the "paste"
+    #                     sheet.Cells(StartRow + len(df.index) - 1,
+    #                                 files[i].column + len(df.columns) - 1)  # No -1 for the index
+    #                     ).Value = df.values
+    #
+    #         sheet.Range(sheet.Cells(StartRow, add_col),  # Cell to start the "paste"
+    #                     sheet.Cells(StartRow + len(add_df.index) - 1,
+    #                                 add_col + len(add_df.columns) - 1)  # No -1 for the index
+    #                     ).Value = add_df.values
+    #         UpdateEndRow = get_last_row_from_column(sheet, 'B', True) + 1
+    #         if files[i].type_file != 'CRM':
+    #             sheet.Range(f'B{6}:AB{6}').Copy()
+    #             sheet.Range(f'B{StartRow}:AB{UpdateEndRow}').PasteSpecial(-4122)
+    #
+    #
+    #     if obj.type_file in ('AccPay', 'AccSales'):
+    #         if not obj.is_empty:
+    #             pivot_sheet[obj.type_file] = obj.period
+    #         else:
+    #             pivot_sheet[obj.type_file] = []
+    #
+    # for k, v in pivot_sheet.items():
+    #     if v == []:
+    #         pivot_sheet[k] = max(pivot_sheet.values(), key=lambda x: len(x))
+    #
+    # sheet = wb.Worksheets([ws.Name for ws in wb.Sheets if 'Свод' in ws.Name][0])
+    # pivot_sheet['DownTable'] = max(pivot_sheet.values(), key=lambda x: len(x))
 
     add_columns(sheet, pivot_sheet, user_values, periods, change_period, create_new_file)
     out.Update('Оформление СВОДа: добавление столбцов')

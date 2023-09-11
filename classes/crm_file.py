@@ -41,10 +41,11 @@ class CrmFile:
             self.filter_frame()
 
     def load_data(self):
-        wb = openpyxl.load_workbook(self.path, read_only=True)
+        wb = openpyxl.load_workbook(self.path, read_only=True, data_only=True)
         ws = wb[wb.sheetnames[0]]
-        headers = self.clear_columns(list(ws.values)[0])
-        raw_data = pd.DataFrame(list(ws.values)[1:], columns=headers)
+        raw_values = list(ws.values)
+        headers = self.clear_columns(raw_values[0])
+        raw_data = pd.DataFrame(raw_values[1:], columns=headers)
         raw_data.fillna('missing', inplace=True)
         raw_data = self.__change_type_to_str(raw_data)
         raw_data = self.__custom_fillna(raw_data)

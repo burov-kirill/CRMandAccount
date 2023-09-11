@@ -119,8 +119,8 @@ def open_and_fill_new_file(path, name, prj, df, period):
 
     # sheet = wb.Worksheets('Лист1')
     # sheet.Cells(2.1).Value = "win32com"
-    prj = prj.replace('-', '_')
-    DDU_sheet, DKP_sheet, CRM_sheet, RES_sheet, DICT_sheet = create_sheet(wb, prj)
+    prj_for_formula = prj.replace('-', '_')
+    DDU_sheet, DKP_sheet, CRM_sheet, RES_sheet, DICT_sheet = create_sheet(wb, prj_for_formula)
     ws = wb.Worksheets(DICT_sheet)
     ws.Range(ws.Cells(1, 1),  # Cell to start the "paste"
              ws.Cells(1 + len(ROMANIAN_NUMBERS.index) - 1,
@@ -140,7 +140,7 @@ def open_and_fill_new_file(path, name, prj, df, period):
     Excel.ActiveWindow.DisplayGridlines = False
     ws.Cells.Font.Name = "Arial"
     ws.Cells.Font.Size = 10
-    fill_data(ws, df, DDU_sheet, DKP_sheet, CRM_sheet,DICT_sheet, prj, period)
+    fill_data(ws, df, DDU_sheet, DKP_sheet, CRM_sheet,DICT_sheet, prj_for_formula, period, prj)
     ws = wb.Worksheets(RES_sheet)
     ws.Activate()
     wb.Worksheets(RES_sheet).Tab.Color = rgbToInt((128, 128, 128))
@@ -208,7 +208,7 @@ def create_columns(Excel, wb, sheet_dict):
                 rng.Borders(border_id).LineStyle = 1
                 rng.Borders(border_id).Weight = 2
 
-def fill_data(ws,df, DDU_name, DKP_name, CRM_name, DICT_name,  prj, period):
+def fill_data(ws,df, DDU_name, DKP_name, CRM_name, DICT_name,  prj, period, prj_for_data):
     bottom_dict = create_bottom_dict(period)
     periods = period_dict[period]
     ws.Cells(19,2).Value = "Данные по продажам"
@@ -445,7 +445,7 @@ def fill_data(ws,df, DDU_name, DKP_name, CRM_name, DICT_name,  prj, period):
                           2 + len(new_df.columns) - 1)  # No -1 for the index
                  ).Replace(',', '.')
 
-        value_dict = create_value_dict(ws, df, k, prj, periods, StartRow, BIT_row, CRM_row, DDU_name, DKP_name, CRM_name)
+        value_dict = create_value_dict(ws, df, k, prj_for_data, periods, StartRow, BIT_row, CRM_row, DDU_name, DKP_name, CRM_name)
         values_frame = pd.DataFrame().from_dict(value_dict, orient='columns')
         # StartRow += 1
         ws.Range(ws.Cells(StartRow, 5),  # Cell to start the "paste"
