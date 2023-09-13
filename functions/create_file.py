@@ -5,6 +5,7 @@ from collections import namedtuple
 from openpyxl.utils.cell import get_column_letter
 import pandas as pd
 import win32com.client
+import win32timezone
 
 from settings.templates import SALES_METRES_WITH_FIRST_COLUMN, SALES_METRES_WITH_OTHER_COLUMN, CORRECTED_METRES, \
     SALES_METRES_WITHOUT_FIRST_COLUMN, SALES_METRES_WITHOUT_OTHER_COLUMN, SALES_MONEY_WITH_FIRST_COLUMN, \
@@ -92,7 +93,7 @@ def create_bottom_dict(user_period):
 def create_excel_file(path, name):
     Excel = win32com.client.Dispatch("Excel.Application")
     Excel.DisplayAlerts = False
-    Excel.Visible = True
+    Excel.Visible = False
     try:
         wb = Excel.Workbooks.Add()
         path = os.path.abspath((path+name))
@@ -110,7 +111,7 @@ def open_and_fill_new_file(path, name, prj, df, period):
     filename = create_excel_file(path, name)
     Excel = win32com.client.Dispatch("Excel.Application")
     Excel.DisplayAlerts = False
-    Excel.Visible = True
+    Excel.Visible = False
     wb = Excel.Workbooks.Open(filename)
     if Excel.ReferenceStyle != 1:
         Excel.ReferenceStyle = 1

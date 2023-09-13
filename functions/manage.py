@@ -4,6 +4,7 @@ from openpyxl.utils.cell import get_column_letter, column_index_from_string
 import pandas as pd
 import re
 from copy import copy
+import win32timezone
 import string
 import win32com.client
 from collections import namedtuple
@@ -615,7 +616,7 @@ def main_func(user_values, pg_bar, out):
         user_values['SummaryFile'] = os.path.abspath((path+name))
     Excel = win32com.client.Dispatch("Excel.Application")
     Excel.DisplayAlerts = False
-    Excel.Visible = True
+    Excel.Visible = False
     wb = Excel.Workbooks.Open(user_values['SummaryFile'])
     change_period = False
     if user_values['--FROM_PERIOD--'] != user_values['--TO_PERIOD--'] and not user_values['--CREATE_FILE--']:
