@@ -13,6 +13,8 @@ from classes.excel_file import AccountSales, AccountPayment
 from functions.create_file import open_and_fill_new_file, fill_data
 from settings.logs import log
 from settings.templates import PERIOD_FORMULA
+import pythoncom
+
 
 RowsDict = {'По данным 1С': 6, 'По данным CRM': 5, 'Разница': 4,
             'Продажи кв.м. (накопительный итог) без учета ВГО и дополнительных корректировок': 6,
@@ -617,7 +619,7 @@ def main_func(user_values):
         df, periods = get_queue_frame(crm_file, ddu_file, dkp_file, user_values['prj'], user_values["--TO_PERIOD--"])
         open_and_fill_new_file(path, name, user_values['prj'], df, user_values["--TO_PERIOD--"])
         user_values['SummaryFile'] = os.path.abspath((path+name))
-    Excel = win32com.client.Dispatch("Excel.Application")
+    Excel = win32com.client.Dispatch("Excel.Application", pythoncom.CoInitialize())
     Excel.DisplayAlerts = False
     Excel.Visible = False
     wb = Excel.Workbooks.Open(user_values['SummaryFile'])

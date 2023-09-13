@@ -113,7 +113,7 @@ if __name__ == '__main__':
                 if value == len(prj_lst):  #
                     break
             else:
-                window.Element('out').Update(f"Текущий обрабатываемый проект: {value}")
+                window.Element('out').Update(value)
     window.close()
 
     #         except Exception as exp:
