@@ -38,6 +38,9 @@ def tasks(project_list):
         log.info(f'Начата обработка следующего проекта: {project["prj"]}')
         avg_start_time = tm()
         try:
+            # worker_task = ThreadWithReturnValue(target=main_func, args=[project])
+            # worker_task.setDaemon(True)
+            # worker_task.start()
             main_func(project)
         except Exception as exp:
             log.info(f'При обработке следующего проекта {project["prj"]} возникло исключение:\n')
@@ -95,13 +98,15 @@ if __name__ == '__main__':
     avg_time_list = []
     q = queue.Queue()
     prj_status = dict()
+    # tasks(project_list=prj_lst)
     worker_task = ThreadWithReturnValue(target=tasks, args=[prj_lst])
     worker_task.setDaemon(True)
     worker_task.start()
     while True:
         event, values = window.read(timeout=100)
         if event == 'Cancel' or event is None:
-            break
+            os.system('TASKKILL /F /IM excel.exe')
+            sys.exit()
         try:
             value = q.get_nowait()
         except Empty:

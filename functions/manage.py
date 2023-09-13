@@ -324,6 +324,7 @@ def fill_date_columns(df, period, is_crm = False):
 
 
 def add_columns(sheet, pivot_sheet, user_values, periods, change_period, create_new_file, data_list = ''):
+    log.info('Добавление столбцов')
     EndRow = get_last_row_from_column(sheet, 'B', True)
     SplitRow = get_split_row(sheet, EndRow, 'СВЕРКА 1С и CRM') - 2
 
@@ -359,9 +360,12 @@ def add_columns(sheet, pivot_sheet, user_values, periods, change_period, create_
                 obj = create_custom_range(sheet, user_values['prj'], k, EndRow, SplitRow)  # user_values['project']
                 if k == 'AccPay':
                     sheet.Range(obj.past).Insert()
+                    log.info(f'Вставка столбца {obj.past}')
                 try:
                     sheet.Range(obj.copy).Copy()
+                    log.info(f'Вставка столбца {obj.copy}')
                     sheet.Range(obj.past).PasteSpecial(-4123)
+                    log.info(f'Вставка столбца {obj.past}')
                     sheet.Range(obj.past).PasteSpecial(8)
 
                     sheet.Range(obj.past).PasteSpecial(-4122)
@@ -369,6 +373,7 @@ def add_columns(sheet, pivot_sheet, user_values, periods, change_period, create_
                     log.exception(f'{inner_exp}\n{k}\n{obj.copy}\n{obj.past}')
 
                 if k in ('AccPay', "AccSales"):
+                    log.info(f'Изменение заголовков')
                     for key, value in UpTableDict.items():
                         temp_range = re.sub(r'\d+', str(value), obj.past)
                         sheet.Range(temp_range).Value = element
@@ -378,6 +383,7 @@ def add_columns(sheet, pivot_sheet, user_values, periods, change_period, create_
                         sheet.Range(temp_range).Value = element
 
         if k == 'AccPay' and check_rng:
+            log.info(f'Изменение формул')
             change_range(sheet, EndRow, user_values, obj, create_new_file or change_period)
 
 def edit_date_string(date_string):

@@ -28,7 +28,7 @@ def get_projects_list():
 #check if word
 def set_new_project(project_name):
     with open('__PROJECTS__.txt', 'a', encoding='utf8') as file:
-        file.write(f'\n{project_name}')
+        file.write(f'\n{project_name.upper()}')
 
 # PROJECT_NAMES = ['ПУТИЛКОВО', 'АЛХИМОВО', 'СПУТНИК', 'ВЕРЕЙСКАЯ', "ГОРКИ-ПАРК", "ДОЛИНА ЯУЗЫ", "ЕГОРОВО-ПАРК",
 #                  "ЗАРЕЧЬЕ-ПАРК", "КВАРТАЛ ИВАКИНО", "ЛЮБЕРЦЫ", "МОЛЖАНИНОВО", "МЫТИЩИ-ПАРК", "НЕКРАСОВКА",
