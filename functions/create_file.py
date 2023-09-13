@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 from collections import namedtuple
 
 from openpyxl.utils.cell import get_column_letter
@@ -98,6 +99,7 @@ def create_excel_file(path, name):
         wb = Excel.Workbooks.Add()
         path = os.path.abspath((path+name))
         wb.SaveAs(f'{path}', 50)
+        time.sleep(2)
     except Exception as exp:
         Excel.Quit()
         sys.exit()
@@ -111,7 +113,7 @@ def open_and_fill_new_file(path, name, prj, df, period):
     filename = create_excel_file(path, name)
     Excel = win32com.client.Dispatch("Excel.Application")
     Excel.DisplayAlerts = False
-    Excel.Visible = False
+    Excel.Visible = True
     wb = Excel.Workbooks.Open(filename)
     if Excel.ReferenceStyle != 1:
         Excel.ReferenceStyle = 1
@@ -127,7 +129,7 @@ def open_and_fill_new_file(path, name, prj, df, period):
              ).Value = ROMANIAN_NUMBERS.values
     sheet_data = namedtuple('SheetData', ['columns', 'add_columns', 'head', 'init_row',
                                           'init_col', 'interior_color', 'font_color', 'width', 'height'])
-    wb.Worksheets(1).Delete()
+    # wb.Worksheets(1).Delete()
     sheet_dict = {
         DDU_sheet: sheet_data(BIT_COLUMNS, ADD_COLUMNS, 'Карточка счета 76.33 (1С)', 5, 2, (112, 48, 160), (255, 255, 255), 10, 45),
         DKP_sheet: sheet_data(BIT_COLUMNS, ADD_COLUMNS, 'Карточка счета 90.01.1 (1С)', 5, 2, (112, 48, 160), (255, 255, 255), 10, 60),
@@ -156,7 +158,9 @@ def create_sheet(wb, prj):
     # передавать еще список имен или генерировать его
     sheetnames = ['Свод', 'ДДУ', "ДКП", "CRM", 'Словарь']
     for name in sheetnames:
-        add = wb.Sheets.Add(Before=None, After=wb.Sheets(wb.Sheets.count))
+        # add = wb.Sheets.Add(Before=None, After=wb.Sheets(wb.Sheets.count))
+        add = wb.Sheets.Add()
+        time.sleep(2)
         if name == 'Словарь':
             add.Name = name + '_' + prj.replace('-', '_').replace(" ", "_")
         else:

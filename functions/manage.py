@@ -593,14 +593,16 @@ def change_data(ws, period, dict_sheet, project):
     return data_list
 
 
-def main_func(user_values, pg_bar, out):
+def main_func(user_values):
     create_new_file = user_values['--CREATE_FILE--']
     periods = []
     check_report = True
     files = []
     pivot_sheet = dict()
-    out.Update('Считывание файлов')
-    pg_bar.Update(1)
+    # out.Update('Считывание файлов')
+    # progress_value = queue.get_nowait()
+    # pg_bar.UpdateBar(progress_value)
+    # pg_bar.UpdateBar(1)
     if user_values['--CREATE_FILE--']:
         log.info(f'Считывание данных для создания итогового файла')
         crm_file = CrmFile(user_values['CRM'], 'CRM', f'CRM_{user_values["prj"].replace("-", "_").replace(" ", "_")}',False if user_values['CRM']!='' else True, user_values['spt'],user_values['--TO_PERIOD--'])
@@ -611,6 +613,7 @@ def main_func(user_values, pg_bar, out):
         files = [ddu_file, dkp_file, crm_file]
         path = user_values['save_folder']
         name = f'/СверкаCRM_{user_values["prj"]}.xlsb'
+        user_values['SummaryFile'] = os.path.abspath((path+name))
         df, periods = get_queue_frame(crm_file, ddu_file, dkp_file, user_values['prj'], user_values["--TO_PERIOD--"])
         open_and_fill_new_file(path, name, user_values['prj'], df, user_values["--TO_PERIOD--"])
         user_values['SummaryFile'] = os.path.abspath((path+name))
@@ -702,6 +705,8 @@ def main_func(user_values, pg_bar, out):
                      ws.Cells(1 + len(ROMANIAN_NUMBERS.index) - 1,
                                  1 + len(ROMANIAN_NUMBERS.columns) - 1)  # No -1 for the index
                      ).Value = ROMANIAN_NUMBERS.values
+        else:
+            DICT_NAME = f'Словарь_{custom_replace(user_values["prj"])}'
         # ws = wb.Worksheets('Свод_' +custom_replace(user_values["prj"]))
         ws = wb.Worksheets(del_name)
         ws.Activate()
@@ -712,8 +717,11 @@ def main_func(user_values, pg_bar, out):
         # fill_data(ws, df, DDU_name, DKP_name, CRM_name, DICT_NAME , prj_for_formula, user_values['--TO_PERIOD--'], prj_for_data)
         if user_values['--REVIEW--']:
             log.info(f'Оформление ревью')
-            out.Update('Считывание файлов')
-            pg_bar.Update(3)
+            # queue.put(2)
+            # out.Update('Считывание файлов')
+            # progress_value = queue.get_nowait()
+            # pg_bar.UpdateBar(progress_value)
+            # pg_bar.UpdateBar(2)
             if user_values['--TO_PERIOD--'] != 'Год':
                 pivot_sheet = {
                                 'AccPay': [min(periods, key=lambda x: (int(x.split('_')[1]), int(x.split('_')[0])))],
@@ -741,9 +749,11 @@ def main_func(user_values, pg_bar, out):
                 is_empty = False
             files.append(v.object(user_values[k], k, v.sheetname, is_empty, user_values['spt'], user_values['--TO_PERIOD--']))
 
-    out.Update('Запись в файл')
+    # out.Update('Запись в файл')
     log.info(f'Запись в файл')
-    pg_bar.Update(2)
+    # progress_value = queue.get_nowait()
+    # pg_bar.UpdateBar(progress_value)
+    # pg_bar.UpdateBar(3)
     sheet, pivot_sheet = write_new_data(wb, files)
 
     # for i, obj in enumerate(files):
@@ -813,13 +823,17 @@ def main_func(user_values, pg_bar, out):
     # pivot_sheet['DownTable'] = max(pivot_sheet.values(), key=lambda x: len(x))
 
     add_columns(sheet, pivot_sheet, user_values, periods, change_period, create_new_file)
-    out.Update('Оформление СВОДа: добавление столбцов')
-    pg_bar.Update(3)
+    # out.Update('Оформление СВОДа: добавление столбцов')
+    # progress_value = queue.get_nowait()
+    # pg_bar.UpdateBar(progress_value)
+    # pg_bar.UpdateBar(4)
 
 
     if user_values['--ADD_STRING--'] and  'new_data' in user_values.keys() and user_values['new_data'] != '':
-        out.Update('Оформление СВОДа: добавление строк')
-        pg_bar.Update(4)
+        # out.Update('Оформление СВОДа: добавление строк')
+        # progress_value = queue.get_nowait()
+        # pg_bar.UpdateBar(progress_value)
+        # pg_bar.UpdateBar(5)
         add_rows(sheet, user_values['new_data'], user_values['prj'])
     wb.Save()
     wb.Close()
