@@ -1,4 +1,5 @@
 import os
+import time
 from datetime import datetime
 from openpyxl.utils.cell import get_column_letter, column_index_from_string
 import pandas as pd
@@ -369,6 +370,7 @@ def add_columns(sheet, pivot_sheet, user_values, periods, change_period, create_
                     sheet.Range(obj.past).PasteSpecial(8)
 
                     sheet.Range(obj.past).PasteSpecial(-4122)
+                    time.sleep(0.5)
                 except Exception as inner_exp:
                     log.exception(f'{inner_exp}\n{k}\n{obj.copy}\n{obj.past}')
 
