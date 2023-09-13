@@ -45,8 +45,8 @@ if __name__ == '__main__':
             if user_values['many_files']:
                 prj_lst = create_projects_list(user_values)
                 prj_status = {project: False for project in user_values['prj_list']}
-                for prj in prj_lst:
-                    window.Element('prg_frame').Update(prj['prj'])
+                for i, prj in enumerate(prj_lst, 1):
+                    window.Element('prg_frame').Update(f"{prj['prj']} {i} из {len(prj_lst)}")
                     try:
                         log.info(f'Начата обработка следующего проекта: {prj["prj"]}')
                         avg_start_time = time()
@@ -71,7 +71,7 @@ if __name__ == '__main__':
                     check_report = False
                     os.system('TASKKILL /F /IM excel.exe')
                 else:
-                    log.info(f'Обработка проекта {user_values["prj"]} успешно завершена')
+                    log.info(f'Обработка проекта успешно завершена')
                     check_report = True
             break
     window.close()

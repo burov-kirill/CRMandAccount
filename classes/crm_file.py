@@ -50,6 +50,7 @@ class CrmFile:
         raw_data = self.__change_type_to_str(raw_data)
         raw_data = self.__custom_fillna(raw_data)
         raw_data['Цена_дог,руб(без дублей)'] = pd.to_numeric(raw_data['Цена_дог,руб(без дублей)'], errors='ignore')
+        raw_data['Площадь общая по договору (без дублей)'] = pd.to_numeric(raw_data['Площадь общая по договору (без дублей)'], errors='ignore')
         return raw_data
 
     def filter_frame(self):
@@ -77,8 +78,10 @@ class CrmFile:
         add_df['Учитывается(нет/да)'] = np.where(self.df['Контрагент'] == 'ООО "САМОЛЕТ-НЕДВИЖИМОСТЬ МСК"', 'Нет', 'Да')
         add_df['Тип контрагента (Партнер или нет)'] = np.where(self.df['Прав.Тип'] == 'Партнеры', 'Да', 'Нет')
         # add_df['Площадь'] = np.where(add_df['Учитывается(нет/да)']=='Да', self.df['Площадь общая по договору (без дублей)'], 0)
-        add_df['Площадь'] = [f'=IF(AT{i + 5}="Да",M{i + 5},0)' for i in range(len(add_df))]
-        add_df['Сумма'] = [f'=IF(AT{i + 5}="Да",L{i + 5},0)/1000' for i in range(len(add_df))]
+        # add_df['Площадь'] = [f'=IF(AT{i + 5}="Да",M{i + 5},0)' for i in range(len(add_df))]
+        # add_df['Сумма'] = [f'=IF(AT{i + 5}="Да",L{i + 5},0)/1000' for i in range(len(add_df))]
+        add_df['Сумма'] = self.df['Цена_дог,руб(без дублей)']/1000
+        add_df['Площадь'] = self.df['Площадь общая по договору (без дублей)']
         # add_df['Корректировка м.2'] = [f'=-AX{5+i}' if self.df['Контрагент'][i] in self.TECH_AGENTS
         #                                or self.df['Помещение Под Тип'][i] in self.TECH_PLACES else ''
         #                                for i in range(len(add_df))

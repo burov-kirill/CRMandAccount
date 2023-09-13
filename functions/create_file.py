@@ -92,7 +92,7 @@ def create_bottom_dict(user_period):
 def create_excel_file(path, name):
     Excel = win32com.client.Dispatch("Excel.Application")
     Excel.DisplayAlerts = False
-    Excel.Visible = False
+    Excel.Visible = True
     try:
         wb = Excel.Workbooks.Add()
         path = os.path.abspath((path+name))
@@ -110,14 +110,14 @@ def open_and_fill_new_file(path, name, prj, df, period):
     filename = create_excel_file(path, name)
     Excel = win32com.client.Dispatch("Excel.Application")
     Excel.DisplayAlerts = False
-    Excel.Visible = False
+    Excel.Visible = True
     wb = Excel.Workbooks.Open(filename)
     if Excel.ReferenceStyle != 1:
         Excel.ReferenceStyle = 1
 
     # sheet = wb.Worksheets('Лист1')
     # sheet.Cells(2.1).Value = "win32com"
-    prj_for_formula = prj.replace('-', '_')
+    prj_for_formula = prj.replace('-', '_').replace(' ', '_')
     DDU_sheet, DKP_sheet, CRM_sheet, RES_sheet, DICT_sheet = create_sheet(wb, prj_for_formula)
     ws = wb.Worksheets(DICT_sheet)
     ws.Range(ws.Cells(1, 1),  # Cell to start the "paste"

@@ -167,7 +167,7 @@ def init_panel():
             yeet['--DOC_COL--'].contents_changed()
         if values['_INPUT_'] == '' and (event == 'new_prj' or len(yeet.Element('prj').get_list_values())<len(PROJECT_NAMES)):
             yeet.Element('prj').Update(PROJECT_NAMES)
-        if 'prj' in event:
+        if 'prj' == event:
             selection = values[event][0]
             if selection not in new_value_list:
                 new_value_list.append(selection)
