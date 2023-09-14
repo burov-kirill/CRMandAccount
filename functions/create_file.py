@@ -114,6 +114,8 @@ def open_and_fill_new_file(path, name, prj, df, period):
     Excel = win32com.client.Dispatch("Excel.Application")
     Excel.DisplayAlerts = False
     Excel.Visible = True
+    Excel.ScreenUpdating = False
+    Excel.EnableEvents = False
     wb = Excel.Workbooks.Open(filename)
     if Excel.ReferenceStyle != 1:
         Excel.ReferenceStyle = 1

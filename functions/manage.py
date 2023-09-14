@@ -1,6 +1,9 @@
+import asyncio
 import os
 import time
 from datetime import datetime
+from threading import Thread
+
 from openpyxl.utils.cell import get_column_letter, column_index_from_string
 import pandas as pd
 import re
@@ -48,6 +51,7 @@ period_dict = {'Месяц': [period for element in [
                }
 
 def add_rows(ws, data_path, prj):
+    ws.EnableCalculation = False
     EndRow = get_last_row_from_column(ws, 'B', True)
     new_data = pd.read_excel(data_path)
     for key, value in RowsDict.items():
@@ -67,7 +71,7 @@ def add_rows(ws, data_path, prj):
                     ws.Cells(End - len(new_data) + len(new_data.index) - 1,
                                 3 + len(new_data.columns) - 1)  # No -1 for the index
                     ).Value = new_data.values
-
+    ws.EnableCalculation = True
 def get_excel_range(number):
     if isinstance(number, (int, float)):
         return get_column_letter(number)
@@ -325,6 +329,7 @@ def fill_date_columns(df, period, is_crm = False):
 
 
 def add_columns(sheet, pivot_sheet, user_values, periods, change_period, create_new_file, data_list = ''):
+    sheet.EnableCalculation = False
     log.info('Добавление столбцов')
     EndRow = get_last_row_from_column(sheet, 'B', True)
     SplitRow = get_split_row(sheet, EndRow, 'СВЕРКА 1С и CRM') - 2
@@ -360,22 +365,21 @@ def add_columns(sheet, pivot_sheet, user_values, periods, change_period, create_
             if check_rng:
                 obj = create_custom_range(sheet, user_values['prj'], k, EndRow, SplitRow)  # user_values['project']
                 if k == 'AccPay':
+
+                    # Thread(target=past_column, args = [sheet, obj.past]).start()
+                    # Thread(target=select_cell, args=[sheet]).start()
+                    # Thread(target=func2).start()
                     sheet.Range(obj.past).Insert()
-                    log.info(f'Вставка столбца {obj.past}')
                 try:
                     sheet.Range(obj.copy).Copy()
-                    log.info(f'Вставка столбца {obj.copy}')
                     sheet.Range(obj.past).PasteSpecial(-4123)
-                    log.info(f'Вставка столбца {obj.past}')
                     sheet.Range(obj.past).PasteSpecial(8)
 
                     sheet.Range(obj.past).PasteSpecial(-4122)
-                    time.sleep(0.5)
                 except Exception as inner_exp:
                     log.exception(f'{inner_exp}\n{k}\n{obj.copy}\n{obj.past}')
 
                 if k in ('AccPay', "AccSales"):
-                    log.info(f'Изменение заголовков')
                     for key, value in UpTableDict.items():
                         temp_range = re.sub(r'\d+', str(value), obj.past)
                         sheet.Range(temp_range).Value = element
@@ -385,8 +389,8 @@ def add_columns(sheet, pivot_sheet, user_values, periods, change_period, create_
                         sheet.Range(temp_range).Value = element
 
         if k == 'AccPay' and check_rng:
-            log.info(f'Изменение формул')
             change_range(sheet, EndRow, user_values, obj, create_new_file or change_period)
+    sheet.EnableCalculation = True
 
 def edit_date_string(date_string):
     if date_string != None:
@@ -630,6 +634,8 @@ def main_func(user_values):
     Excel = win32com.client.Dispatch("Excel.Application", pythoncom.CoInitialize())
     Excel.DisplayAlerts = False
     Excel.Visible = False
+    Excel.ScreenUpdating = False
+    Excel.EnableEvents = False
     wb = Excel.Workbooks.Open(user_values['SummaryFile'])
     change_period = False
     if user_values['--FROM_PERIOD--'] != user_values['--TO_PERIOD--'] and not user_values['--CREATE_FILE--']:

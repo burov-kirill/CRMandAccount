@@ -38,14 +38,12 @@ def tasks(project_list):
         log.info(f'Начата обработка следующего проекта: {project["prj"]}')
         avg_start_time = tm()
         try:
-            # worker_task = ThreadWithReturnValue(target=main_func, args=[project])
-            # worker_task.setDaemon(True)
-            # worker_task.start()
             main_func(project)
         except Exception as exp:
             log.info(f'При обработке следующего проекта {project["prj"]} возникло исключение:\n')
             log.exception(exp)
             os.system('TASKKILL /F /IM excel.exe')
+            log.info(f'Файлы проекта {project["prj"]} принудительно закрыты\n')
         else:
             log.info(f'Обработка проекта {project["prj"]} успешно завершена')
             avg_stop_time = tm()
