@@ -80,6 +80,9 @@ if __name__ == '__main__':
         prj_status = {project: False for project in user_values['prj_list']}
     else:
         prj_lst = [user_values]
+    if prj_lst == []:
+        log.info('Не найдены документы ни для одного файла')
+        sys.exit()
         # pg_bar.Update(f"{prj['prj']} {i} из {len(prj_lst)}")
     progressbar = [[sg.ProgressBar(len(prj_lst), size=(50, 10),  orientation='h', key='pg_bar')]]
     outputwin = [[sg.Output(key='out')]]
