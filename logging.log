@@ -15,4 +15,4 @@ AttributeError: 'NoneType' object has no attribute 'Row'
 INFO:user_log:Оформление ревью
 INFO:user_log:Добавление столбцов
 INFO:user_log:Обработка проекта РУБЛЕВСКИЙ КВАРТАЛ успешно завершена
-INFO:user_log:Общее время работы составило: 0.38 минут
+INFO:user_log:Общее время работы составило: 0.44 минут

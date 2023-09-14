@@ -636,6 +636,7 @@ def main_func(user_values):
     Excel.Visible = False
     Excel.ScreenUpdating = False
     Excel.EnableEvents = False
+    Excel.AskToUpdateLinks = False
     wb = Excel.Workbooks.Open(user_values['SummaryFile'])
     change_period = False
     if user_values['--FROM_PERIOD--'] != user_values['--TO_PERIOD--'] and not user_values['--CREATE_FILE--']:
