@@ -465,7 +465,21 @@ def write_new_data(wb, files):
             if files[i].type_file != 'CRM':
                 sheet.Range(f'B{6}:AB{6}').Copy()
                 sheet.Range(f'B{StartRow}:AB{UpdateEndRow}').PasteSpecial(-4122)
-
+            else:
+                sheet.Range(sheet.Cells(StartRow, add_col), sheet.Cells(StartRow + len(add_df.index) - 1, add_col + 6)).Interior.Color\
+                    = rgbToInt((221, 235, 247))
+                sheet.Range(sheet.Cells(StartRow, add_col + 7),sheet.Cells(StartRow + len(add_df.index) - 1, add_col + 8)).Interior.Color\
+                    = rgbToInt((255, 255, 0))
+                sheet.Range(sheet.Cells(StartRow, add_col + 9),sheet.Cells(StartRow + len(add_df.index) - 1, add_col + 9)).Interior.Color\
+                    = rgbToInt((255, 230, 153))
+                sheet.Range(sheet.Cells(StartRow, add_col + 10), sheet.Cells(StartRow + len(add_df.index) - 1, add_col + 10)).Interior.Color\
+                    = rgbToInt((221, 235, 247))
+                sheet.Range(sheet.Cells(StartRow, add_col + 11),sheet.Cells(StartRow + len(add_df.index) - 1, add_col + 11)).Interior.Color\
+                    = rgbToInt((255, 230, 153))
+                sheet.Range(sheet.Cells(StartRow, add_col + 12), sheet.Cells(StartRow + len(add_df.index) - 1, add_col + 12)).Interior.Color\
+                    = rgbToInt((221, 235, 247))
+                sheet.Range(sheet.Cells(StartRow, add_col + 16), sheet.Cells(StartRow + len(add_df.index) - 1, add_col + 16)).Interior.Color\
+                    = rgbToInt((221, 235, 247))
         if obj.type_file in ('AccPay', 'AccSales'):
             if not obj.is_empty:
                 pivot_sheet[obj.type_file] = obj.period
@@ -606,7 +620,12 @@ def change_data(ws, period, dict_sheet, project):
             ws.Range(ws.Cells(start, end_col + 2), ws.Cells(start, end_col + 1 + len(data_list))).Value = formula_list
     return data_list
 
-
+def rgbToInt(rgb):
+    if isinstance(rgb, tuple):
+        colorInt = rgb[0] + (rgb[1] * 256) + (rgb[2] * 256 * 256)
+        return colorInt
+    else:
+        return rgb
 def main_func(user_values):
     create_new_file = user_values['--CREATE_FILE--']
     periods = []
@@ -847,10 +866,6 @@ def main_func(user_values):
 
 
     if user_values['--ADD_STRING--'] and  'new_data' in user_values.keys() and user_values['new_data'] != '':
-        # out.Update('Оформление СВОДа: добавление строк')
-        # progress_value = queue.get_nowait()
-        # pg_bar.UpdateBar(progress_value)
-        # pg_bar.UpdateBar(5)
         add_rows(sheet, user_values['new_data'], user_values['prj'])
     wb.Save()
     wb.Close()
