@@ -411,7 +411,8 @@ def create_col_dict(ws, col_lst, add_col_list):
 def write_new_data(wb, files):
     pivot_sheet = dict()
     for i, obj in enumerate(files):
-        add_col = files[i].additional_column
+        if not files[i].is_empty:
+            add_col = files[i].additional_column
         if files[i].type_file != 'CRM' and files[i].is_empty == False:
             sheet = wb.Worksheets(files[i].sheet_name)
             StartRow = get_last_row_from_column(sheet, option=False) + 2
