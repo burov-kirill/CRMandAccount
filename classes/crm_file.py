@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 class CrmFile:
-    TECH_AGENTS = ['Тихонова Елена Петровна', 'Щербец Елена Игоревна']
+    TECH_AGENTS = ['Тихонова Елена Петровна', 'Щербец Елена Игоревна', 'Петровна Тихонова Елена']
     TECH_PLACES = ['Кладовая', 'Машиноместо']
     FULL_FRAME_COLUMNS = ['Договор, #', '№ Договора', 'Тип договора', 'Дата заключения', 'Дата_рег договора', 'Дата раст.-я',
  'Дата АПП', 'Дата ПАПП', 'Контрагент',  'Цена_дог,руб (дубли)', 'Площадь общая по договору (дубли)', 'Цена_дог,руб(без дублей)',
@@ -92,10 +92,10 @@ class CrmFile:
         add_df.fillna('missing', inplace=True)
         add_df = self.__custom_fillna(add_df)
         add_df['Расторгнут?(да/нет)'] = np.where(add_df['Год расторжения'] == '', 'Нет', 'Да')
-        add_df['Корректировка м.2'] = [f'=-AX{5+i}' if add_df['Расторгнут?(да/нет)'][i] == 'Да' else ''
+        add_df['Корректировка м.2'] = [f'=-AX{5+i}' if add_df['Расторгнут?(да/нет)'][i] == 'Да' or add_df['Контрагент'][i] in self.TECH_AGENTS else ''
                                        for i in range(len(add_df))
                                        ]
-        add_df['Корректировка тыс.руб.'] = [f'=-AY{5 + i}' if add_df['Расторгнут?(да/нет)'][i] == 'Да' else ''
+        add_df['Корректировка тыс.руб.'] = [f'=-AY{5 + i}' if add_df['Расторгнут?(да/нет)'][i] == 'Да' or add_df['Контрагент'][i] in self.TECH_AGENTS else ''
                                             for i in range(len(add_df))
                                        ]
         add_df['Комментарий'] = [f'Техническая продажа' if self.df['Контрагент'][i] in self.TECH_AGENTS else ''

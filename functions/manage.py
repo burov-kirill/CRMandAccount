@@ -403,9 +403,12 @@ def create_col_dict(ws, col_lst, add_col_list):
     money_col = get_column_letter(col_lst.index('Цена_дог,руб(бездублей)')+1)
     queue_col = f"{get_column_letter(col_lst.index('Очередь'))}:{get_column_letter(col_lst.index('Очередь'))}"
     house_col = f"{get_column_letter(col_lst.index('КорпусНомер')+1)}:{get_column_letter(col_lst.index('КорпусНомер')+1)}"
+    add_square_col = f"{get_column_letter(list(add_col_list).index('Площадь')+2+get_split_col(ws, 4))}"
+    add_money_col = f"{get_column_letter(list(add_col_list).index('Сумма') + 2 + get_split_col(ws, 4))}"
     add_queue_col = f"{get_column_letter(list(add_col_list).index('Очередь')+2+get_split_col(ws, 4))}:{get_column_letter(list(add_col_list).index('Очередь')+2+get_split_col(ws, 4))}"
     add_house_col = f"{get_column_letter(list(add_col_list).index('Дом')+2+get_split_col(ws, 4))}:{get_column_letter(list(add_col_list).index('Очередь')+2+get_split_col(ws, 4))}"
-    return {'square_col': square_col, 'money_col': money_col, 'queue_col': queue_col,'house_col': house_col,'add_queue_col':add_queue_col,'add_house_col':add_house_col}
+    return {'square_col': square_col, 'money_col': money_col, 'queue_col': queue_col,'house_col': house_col,
+            'add_queue_col':add_queue_col,'add_house_col':add_house_col, 'add_square_col': add_square_col, 'add_money_col': add_money_col}
 
 
 def write_new_data(wb, files):
@@ -445,12 +448,14 @@ def write_new_data(wb, files):
                 add_col = spl_col + 2
                 col_dict = create_col_dict(sheet, flat_lst, add_df.columns)
                 for key, value in col_dict.items():
-                    if key not in ('square_col', 'money_col'):
+                    if key not in ('square_col', 'money_col', 'add_square_col', 'add_money_col'):
                         sheet.Range(value).NumberFormat = '@'
                         sheet.Range(value).Replace(',', '.')
                 condition = get_column_letter(len(df.columns) + list(add_df.columns).index('Учитывается(нет/да)') + 2)
                 add_df['Площадь'] = [f'=IF({condition}{i + 5}="Да",{col_dict["square_col"]}{i + 5},0)' for i in range(len(add_df))]
                 add_df['Сумма'] = [f'=IF({condition}{i + 5}="Да",{col_dict["money_col"]}{i + 5},0)/1000' for i in range(len(add_df))]
+                add_df['Корректировка м.2'] = [f'=-{col_dict["add_square_col"]}{i+5}' if add_df['Корректировка м.2'][i]!='' else '' for i in range(len(add_df))]
+                add_df['Корректировка тыс.руб.'] = [f'=-{col_dict["add_money_col"]}{i + 5}' if add_df['Корректировка м.2'][i] != '' else '' for i in range(len(add_df))]
 
             sheet.Range(sheet.Cells(StartRow, files[i].column),  # Cell to start the "paste"
                             sheet.Cells(StartRow + len(df.index) - 1,
