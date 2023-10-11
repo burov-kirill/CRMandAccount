@@ -33,7 +33,7 @@ ADD_CRM_COLUMNS = ['Квартал регистрации договора', 'Г
 
 CRM_COLUMNS = ['Договор, #', '№ Договора', 'Тип договора', 'Дата заключения', 'Дата_рег договора',
                       'Дата раст.-я',
-                      'Дата АПП', 'Продавец', 'Дата ПАПП', 'Контрагент', 'Цена_дог,руб (дубли)',
+                      'Дата АПП', 'Дата ПАПП', 'Продавец', 'Контрагент', 'Цена_дог,руб (дубли)',
                       'Площадь общая по договору (дубли)', 'Цена_дог,руб(без дублей)',
                       'Площадь общая по договору (без дублей)', 'Адрес дома', 'Застройка', 'Очередь', 'Помещение Тип',
                       'Помещение Под Тип',
@@ -113,7 +113,7 @@ def open_and_fill_new_file(path, name, prj, df, period):
     filename = create_excel_file(path, name)
     Excel = win32com.client.Dispatch("Excel.Application")
     Excel.DisplayAlerts = False
-    Excel.Visible = True
+    Excel.Visible = False
     Excel.ScreenUpdating = False
     Excel.EnableEvents = False
     wb = Excel.Workbooks.Open(filename)
@@ -500,7 +500,10 @@ def fill_data(ws,df, DDU_name, DKP_name, CRM_name, DICT_name,  prj, period, prj_
         right_value_frame = pd.DataFrame().from_dict(right_value_dict, orient='columns')
 
         rng = ws.Range(ws.Cells(StartRow, 5), ws.Cells(StartRow + len(left_value_frame.index) - 1, 5 + len(left_value_frame.columns) - 1))
-        rng.Value = left_value_frame.values
+        try:
+            rng.Value = left_value_frame.values
+        except Exception as exp:
+            pass
         rng = ws.Range(ws.Cells(StartRow, 2),ws.Cells(StartRow + len(left_value_frame.index) - 1, 5 + len(left_value_frame.columns) - 1))
         set_border(ws, rng, StartRow, 2, StartRow + len(left_value_frame.index) - 1, 5 + len(left_value_frame.columns) - 1)
 
@@ -871,10 +874,9 @@ def create_value_dict(ws, df, key, prj, periods, StartRow, BIT_row, CRM_row, DDU
         DKP_FORMULA_MONEY_DENIAL = FORMULA_MONEY_DENIAL.substitute(CRM_NAME=CRM_name, SALES_PERIOD=PeriodRow,
                                                                    DOC_TYPE='ДКП')
 
-        FORMULS = [DDU_FORMULA_METRES_CLOSE, DDU_FORMULA_METRES_DENIAL, DDU_FORMULA_MONEY_CLOSE,
-                   DDU_FORMULA_MONEY_DENIAL, '', '',
-                   DKP_FORMULA_METRES_CLOSE, DKP_FORMULA_METRES_DENIAL, DKP_FORMULA_MONEY_CLOSE,
-                   DKP_FORMULA_MONEY_DENIAL]
+        FORMULS = [DDU_FORMULA_MONEY_CLOSE,DDU_FORMULA_MONEY_DENIAL, DDU_FORMULA_METRES_CLOSE, DDU_FORMULA_METRES_DENIAL,
+                   '', '',
+                   DKP_FORMULA_MONEY_CLOSE,DKP_FORMULA_MONEY_DENIAL, DKP_FORMULA_METRES_CLOSE, DKP_FORMULA_METRES_DENIAL]
         for _ in periods:
             for i, formula in enumerate(FORMULS):
                 lst = [formula] * len(df)

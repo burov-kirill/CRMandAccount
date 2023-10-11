@@ -875,5 +875,10 @@ def main_func(user_values):
         add_rows(sheet, user_values['new_data'], user_values['prj'])
     wb.Save()
     wb.Close()
+    Excel.DisplayAlerts = True
+    Excel.Visible = True
+    Excel.ScreenUpdating = True
+    Excel.EnableEvents = True
+    Excel.AskToUpdateLinks = True
     Excel.Quit()
     return user_values
