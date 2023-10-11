@@ -553,9 +553,9 @@ def fill_data(ws,df, DDU_name, DKP_name, CRM_name, DICT_name,  prj, period, prj_
     ws.Cells(9, 4).Value = 'CRM'
     # decorate_cells(ws.Cells(9, 4), (82, 170, 49), (255, 255, 255), 10, 'Arial', True)
     ws.Cells(10,
-             4).Value = f'=SUMIFS({CRM_name}!AY:AY,{CRM_name}!AQ:AQ,"ДДУ")-SUMIFS({CRM_name}!AY:AY,{CRM_name}!BA:BA,"Да")'
+             4).Value = f'=SUMIFS({CRM_name}!AZ:AZ,{CRM_name}!AR:AR,"ДДУ")-SUMIFS({CRM_name}!AZ:AZ,{CRM_name}!BB:BB,"Да")'
     ws.Cells(10, 4).NumberFormat = '# ###;(# ###);"-"'
-    ws.Cells(11, 4).Value = f'=SUMIFS({CRM_name}!AY:AY,{CRM_name}!AQ:AQ,"ДКП")'
+    ws.Cells(11, 4).Value = f'=SUMIFS({CRM_name}!AZ:AZ,{CRM_name}!AR:AR,"ДКП")'
     ws.Cells(11, 4).NumberFormat = '# ###;(# ###);"-"'
     ws.Cells(12, 4).Value = f'=SUM(D10:D11)'
     ws.Cells(12, 4).NumberFormat = '# ###;(# ###);"-"'
