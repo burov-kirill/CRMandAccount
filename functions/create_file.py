@@ -162,7 +162,7 @@ def create_sheet(wb, prj):
     for name in sheetnames:
         # add = wb.Sheets.Add(Before=None, After=wb.Sheets(wb.Sheets.count))
         add = wb.Sheets.Add()
-        time.sleep(2)
+        time.sleep(5)
         if name == 'Словарь':
             add.Name = name + '_' + prj.replace('-', '_').replace(" ", "_")
         else:
@@ -428,14 +428,14 @@ def fill_data(ws,df, DDU_name, DKP_name, CRM_name, DICT_name,  prj, period, prj_
                                                         DOC_TYPE='ДКП')] * len(df)
             elif k == 'Продажи кв.м. (накопительный итог) с учетом ВГО и дополнительных корректировок':
                 if j == 5:
-                    left_lst = [SALES_METRES_WITHOUT_FIRST_COLUMN.substitute(CRM_ROW=CRM_row + i, CRM_PERIOD=CRM_row-4,SALES_PERIOD=Sales_metres_row,CRM_TYPE=CRM_row-5,DOC_TYPE='ДДУ',SALES_CORRECTED=CORRECTED_METRES_ROW+i)
+                    left_lst = [SALES_METRES_WITHOUT_FIRST_COLUMN.substitute(CRM_ROW=CRM_row + i, CRM_PERIOD=CRM_row-4,SALES_PERIOD=Sales_metres_row,CRM_TYPE=CRM_row-5,DOC_TYPE='ДДУ',SALES_CORRECTED=CORRECTED_METRES_ROW+i-1)
                                 for i in range(len(df))]
-                    right_lst = [SALES_METRES_WITHOUT_FIRST_COLUMN.substitute(CRM_ROW=CRM_row + i, CRM_PERIOD=CRM_row-4,SALES_PERIOD=Sales_metres_row,CRM_TYPE=CRM_row-5,DOC_TYPE='ДКП',SALES_CORRECTED=CORRECTED_METRES_ROW+i)
+                    right_lst = [SALES_METRES_WITHOUT_FIRST_COLUMN.substitute(CRM_ROW=CRM_row + i, CRM_PERIOD=CRM_row-4,SALES_PERIOD=Sales_metres_row,CRM_TYPE=CRM_row-5,DOC_TYPE='ДКП',SALES_CORRECTED=CORRECTED_METRES_ROW+i-1)
                                 for i in range(len(df))]
                 else:
-                    left_lst = [SALES_METRES_WITHOUT_OTHER_COLUMN.substitute(CRM_ROW=CRM_row + i, CRM_PERIOD=CRM_row-4,SALES_PERIOD=Sales_metres_row,CRM_TYPE=CRM_row-5,DOC_TYPE='ДДУ',SALES_CORRECTED=CORRECTED_METRES_ROW+i, PREV_COL=get_column_letter(j - 1))
+                    left_lst = [SALES_METRES_WITHOUT_OTHER_COLUMN.substitute(CRM_ROW=CRM_row + i, CRM_PERIOD=CRM_row-4,SALES_PERIOD=Sales_metres_row,CRM_TYPE=CRM_row-5,DOC_TYPE='ДДУ',SALES_CORRECTED=CORRECTED_METRES_ROW+i-1, PREV_COL=get_column_letter(j - 1))
                                 for i in range(len(df))]
-                    right_lst = [SALES_METRES_WITHOUT_OTHER_COLUMN.substitute(CRM_ROW=CRM_row + i, CRM_PERIOD=CRM_row-4,SALES_PERIOD=Sales_metres_row,CRM_TYPE=CRM_row-5,DOC_TYPE='ДКП',SALES_CORRECTED=CORRECTED_METRES_ROW+i,PREV_COL=get_column_letter(j+len(periods)))
+                    right_lst = [SALES_METRES_WITHOUT_OTHER_COLUMN.substitute(CRM_ROW=CRM_row + i, CRM_PERIOD=CRM_row-4,SALES_PERIOD=Sales_metres_row,CRM_TYPE=CRM_row-5,DOC_TYPE='ДКП',SALES_CORRECTED=CORRECTED_METRES_ROW+i-1,PREV_COL=get_column_letter(j+len(periods)))
                                 for i in range(len(df))]
 
             elif k == 'Продажи тыс. руб. (накопительный итог) без учета ВГО и дополнительных корректировок':
